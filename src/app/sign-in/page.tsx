@@ -9,17 +9,24 @@ import { signInAction } from "@/services/actions";
 import { redirect } from "next/navigation";
 import { getRepository } from "@/services";
 
+function safeRedirectPath(next: string | undefined) {
+  if (next && next.startsWith("/") && !next.startsWith("//")) return next;
+  return "/dashboard";
+}
+
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, next } = await searchParams;
   const user = await getRepository().getSessionUser();
   if (user) {
     const ctx = await getRepository().getHouseholdContext();
-    redirect(ctx ? "/dashboard" : "/onboarding");
+    redirect(ctx ? safeRedirectPath(next) : "/onboarding");
   }
+
+  const nextPath = safeRedirectPath(next);
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-10">
@@ -38,17 +45,19 @@ export default async function SignInPage({
         <form
           action={async (formData) => {
             "use server";
+            const destination = safeRedirectPath(String(formData.get("next") || ""));
             try {
               await signInAction(formData);
             } catch (e) {
               const message = e instanceof Error ? e.message : "Sign in failed";
               redirect(`/sign-in?error=${encodeURIComponent(message)}`);
             }
-            redirect("/dashboard");
+            redirect(destination);
           }}
           className="mt-6 space-y-4"
         >
           <input type="hidden" name="mode" value="password" />
+          <input type="hidden" name="next" value={nextPath} />
           <div>
             <Label htmlFor="email">Email</Label>
             <Input
@@ -80,16 +89,18 @@ export default async function SignInPage({
           action={async (formData) => {
             "use server";
             formData.set("mode", "magic");
+            const destination = safeRedirectPath(String(formData.get("next") || ""));
             try {
               await signInAction(formData);
             } catch (e) {
               const message = e instanceof Error ? e.message : "Sign in failed";
               redirect(`/sign-in?error=${encodeURIComponent(message)}`);
             }
-            redirect("/dashboard");
+            redirect(destination);
           }}
           className="mt-4 space-y-3 border-t border-border pt-4"
         >
+          <input type="hidden" name="next" value={nextPath} />
           <p className="text-sm text-muted">Or continue with a magic link:</p>
           <Input
             name="email"
