@@ -29,6 +29,8 @@ model Profile {
   activityEvents    ActivityEvent[]
   notifications     Notification[]
   notificationPrefs NotificationPreference?
+  pushSubscriptions PushSubscription[]
+  wellnessCheckIns  WellnessCheckIn[]
 
   @@map("together_profiles")
 }
@@ -46,6 +48,7 @@ model Household {
   items         Item[]
   activityEvents ActivityEvent[]
   notifications Notification[]
+  wellnessCheckIns WellnessCheckIn[]
 
   @@map("together_households")
 }
@@ -114,6 +117,7 @@ model Item {
   comments      Comment[]
   activityEvents ActivityEvent[]
   notifications Notification[]
+  reminderLogs  DeadlineReminderLog[]
 
   @@index([householdId])
   @@index([type])
@@ -303,4 +307,50 @@ model NotificationPreference {
   user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("together_notification_preferences")
+}
+
+model PushSubscription {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  endpoint     String   @db.Text
+  endpointHash String   @unique @map("endpoint_hash")
+  p256dh       String   @db.Text
+  auth         String   @db.Text
+  userAgent    String?  @map("user_agent") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("together_push_subscriptions")
+}
+
+model DeadlineReminderLog {
+  id        String   @id @default(cuid())
+  itemId    String   @map("item_id")
+  kind      String
+  sentAt    DateTime @default(now()) @map("sent_at")
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, kind])
+  @@map("together_deadline_reminder_logs")
+}
+
+model WellnessCheckIn {
+  id          String   @id @default(cuid())
+  householdId String   @map("household_id")
+  userId      String   @map("user_id")
+  mental      Int
+  physical    Int
+  emotional   Int
+  note        String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user      Profile   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([householdId, userId, createdAt])
+  @@map("together_wellness_check_ins")
 }

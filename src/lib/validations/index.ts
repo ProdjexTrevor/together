@@ -63,3 +63,14 @@ export const onboardingSchema = z.object({
   household_name: z.string().min(1, "Household name is required"),
   partner_email: z.string().email("Enter a valid partner email").optional().or(z.literal("")),
 });
+
+const scoreSchema = z.coerce.number().int().min(1).max(5);
+
+export const wellnessCheckInSchema = z.object({
+  mental: scoreSchema,
+  physical: scoreSchema,
+  emotional: scoreSchema,
+  note: z.string().max(280).optional().or(z.literal("")),
+});
+
+export type WellnessCheckInInput = z.infer<typeof wellnessCheckInSchema>;

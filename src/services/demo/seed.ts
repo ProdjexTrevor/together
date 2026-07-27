@@ -16,6 +16,7 @@ import type {
   NotificationPreferences,
   Profile,
   TaskChecklistItem,
+  WellnessCheckIn,
 } from "@/types";
 
 export const DEMO_PASSWORD = "together123";
@@ -530,6 +531,7 @@ export function createSeedState() {
     activity,
     notifications,
     notificationPrefs,
+    checkIns: [] as WellnessCheckIn[],
     decidedOutcomes: {} as Record<string, { option_id: string; summary: string }>,
   };
 }

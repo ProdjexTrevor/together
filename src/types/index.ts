@@ -201,6 +201,17 @@ export interface NotificationPreferences {
   contributions: boolean;
 }
 
+export interface WellnessCheckIn {
+  id: string;
+  household_id: string;
+  user_id: string;
+  mental: number;
+  physical: number;
+  emotional: number;
+  note: string | null;
+  created_at: string;
+}
+
 export interface HouseholdContext {
   household: Household;
   members: (HouseholdMember & { profile: Profile })[];

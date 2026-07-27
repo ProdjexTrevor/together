@@ -6,6 +6,7 @@ import {
   CalendarDays,
   CheckSquare,
   CircleDollarSign,
+  HeartPulse,
   Home,
   MoreHorizontal,
   Scale,
@@ -17,6 +18,7 @@ import { AvatarPair } from "@/components/ui/avatar";
 
 const desktopLinks = [
   { href: "/dashboard", label: "Home", icon: Home },
+  { href: "/check-in", label: "Check-in", icon: HeartPulse },
   { href: "/tasks", label: "Tasks", icon: CheckSquare },
   { href: "/decisions", label: "Decisions", icon: Scale },
   { href: "/goals", label: "Goals", icon: Target },
@@ -25,8 +27,8 @@ const desktopLinks = [
 
 const mobileLinks = [
   { href: "/dashboard", label: "Home", icon: Home },
+  { href: "/check-in", label: "Check-in", icon: HeartPulse },
   { href: "/tasks", label: "Tasks", icon: CheckSquare },
-  { href: "/decisions", label: "Decisions", icon: Scale },
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/settings", label: "More", icon: MoreHorizontal },
 ];

@@ -104,6 +104,26 @@ export async function updateNotificationPrefsAction(prefs: Record<string, boolea
   return result;
 }
 
+export async function createWellnessCheckInAction(raw: {
+  mental: number;
+  physical: number;
+  emotional: number;
+  note?: string;
+}) {
+  const { wellnessCheckInSchema } = await import("@/lib/validations");
+  const parsed = wellnessCheckInSchema.parse(raw);
+  const row = await getRepository().createWellnessCheckIn({
+    mental: parsed.mental,
+    physical: parsed.physical,
+    emotional: parsed.emotional,
+    note: parsed.note || undefined,
+  });
+  revalidatePath("/check-in");
+  revalidatePath("/dashboard");
+  revalidatePath("/settings");
+  return row;
+}
+
 export async function deleteItemAction(itemId: string) {
   const deleted = await getRepository().deleteItem(itemId);
   const listPath = `/${pathForType(deleted.type)}`;

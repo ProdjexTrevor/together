@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { dollarsToCents } from "@/lib/money";
 import { utcNowIso } from "@/lib/dates";
+import { typePath } from "@/lib/status";
 import { prisma } from "@/lib/prisma";
 import type { CreateItemInput } from "@/lib/validations";
 import type {
@@ -560,6 +561,16 @@ export const mysqlRepository = {
       `Created by ${ctx.currentUser.full_name}`
     );
 
+    const itemUrl = `/${typePath(created.type as ItemType)}/${created.id}`;
+    const typeLabel =
+      created.type === "financial_target"
+        ? "financial target"
+        : created.type === "decision"
+          ? "decision"
+          : created.type === "goal"
+            ? "goal"
+            : "task";
+
     if (ownerId && ownerId !== ctx.currentUser.id) {
       await prisma.notification.create({
         data: {
@@ -571,6 +582,36 @@ export const mysqlRepository = {
           body: `${ctx.currentUser.full_name} assigned ${created.title} to you.`,
         },
       });
+    }
+
+    // In-app + push: partner learns when something new is created
+    const partners = ctx.members.filter((m) => m.user_id !== ctx.currentUser.id);
+    for (const partner of partners) {
+      if (ownerId === partner.user_id) continue; // already notified as assignment
+      await prisma.notification.create({
+        data: {
+          userId: partner.user_id,
+          householdId: ctx.household.id,
+          itemId: created.id,
+          type: "assignment",
+          title: "Something new",
+          body: `${ctx.currentUser.full_name} created a ${typeLabel}: "${created.title}".`,
+        },
+      });
+    }
+
+    try {
+      const { notifyHouseholdPartners } = await import("@/lib/push");
+      await notifyHouseholdPartners({
+        householdId: ctx.household.id,
+        actorId: ctx.currentUser.id,
+        title: "Something new",
+        body: `${ctx.currentUser.full_name} created a ${typeLabel}: "${created.title}".`,
+        url: itemUrl,
+        preferKey: "assignments",
+      });
+    } catch {
+      // Push is optional — never block create on delivery failure.
     }
 
     return (await enrichItem(created.id))!;
@@ -1006,5 +1047,124 @@ export const mysqlRepository = {
       deadlines: row?.deadlines ?? true,
       contributions: row?.contributions ?? true,
     };
+  },
+
+  async createWellnessCheckIn(input: {
+    mental: number;
+    physical: number;
+    emotional: number;
+    note?: string;
+  }) {
+    const ctx = await this.getHouseholdContext();
+    if (!ctx) throw new Error("No household");
+
+    const row = await prisma.wellnessCheckIn.create({
+      data: {
+        householdId: ctx.household.id,
+        userId: ctx.currentUser.id,
+        mental: input.mental,
+        physical: input.physical,
+        emotional: input.emotional,
+        note: input.note?.trim() || null,
+      },
+    });
+
+    const partners = ctx.members.filter((m) => m.user_id !== ctx.currentUser.id);
+    for (const partner of partners) {
+      await prisma.notification.create({
+        data: {
+          userId: partner.user_id,
+          householdId: ctx.household.id,
+          type: "check_in",
+          title: "New check-in",
+          body: `${ctx.currentUser.full_name} shared how they're doing.`,
+        },
+      });
+    }
+
+    try {
+      const { notifyHouseholdPartners } = await import("@/lib/push");
+      await notifyHouseholdPartners({
+        householdId: ctx.household.id,
+        actorId: ctx.currentUser.id,
+        title: "New check-in",
+        body: `${ctx.currentUser.full_name} shared how they're doing.`,
+        url: "/check-in",
+      });
+    } catch {
+      // optional
+    }
+
+    return {
+      id: row.id,
+      household_id: row.householdId,
+      user_id: row.userId,
+      mental: row.mental,
+      physical: row.physical,
+      emotional: row.emotional,
+      note: row.note,
+      created_at: row.createdAt.toISOString(),
+    };
+  },
+
+  async listWellnessCheckIns(userId?: string, limit = 14) {
+    const ctx = await this.getHouseholdContext();
+    if (!ctx) return [];
+    const target = userId ?? ctx.currentUser.id;
+    const allowed = ctx.members.some((m) => m.user_id === target);
+    if (!allowed) throw new Error("Forbidden");
+
+    const rows = await prisma.wellnessCheckIn.findMany({
+      where: { householdId: ctx.household.id, userId: target },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
+
+    return rows.map((row) => ({
+      id: row.id,
+      household_id: row.householdId,
+      user_id: row.userId,
+      mental: row.mental,
+      physical: row.physical,
+      emotional: row.emotional,
+      note: row.note,
+      created_at: row.createdAt.toISOString(),
+    }));
+  },
+
+  async getLatestWellnessCheckIns() {
+    const ctx = await this.getHouseholdContext();
+    if (!ctx) return { mine: null, partner: null };
+
+    const [mineRows, partnerRows] = await Promise.all([
+      prisma.wellnessCheckIn.findMany({
+        where: { householdId: ctx.household.id, userId: ctx.currentUser.id },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      }),
+      ctx.partner
+        ? prisma.wellnessCheckIn.findMany({
+            where: { householdId: ctx.household.id, userId: ctx.partner.id },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const map = (row: (typeof mineRows)[number] | undefined) =>
+      row
+        ? {
+            id: row.id,
+            household_id: row.householdId,
+            user_id: row.userId,
+            mental: row.mental,
+            physical: row.physical,
+            emotional: row.emotional,
+            note: row.note,
+            created_at: row.createdAt.toISOString(),
+          }
+        : null;
+
+    return { mine: map(mineRows[0]), partner: map(partnerRows[0]) };
   },
 };

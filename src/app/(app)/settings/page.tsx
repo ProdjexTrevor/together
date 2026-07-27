@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { signOutAction, updateNotificationPrefsAction } from "@/services/actions";
 import { formatRelative } from "@/lib/dates";
+import { PushEnableCard } from "@/components/settings/push-enable-card";
 
 export default async function SettingsPage() {
   const { repo, ctx } = await requireHousehold();
@@ -41,6 +42,13 @@ export default async function SettingsPage() {
         </Card>
 
         <Card className="p-5">
+          <h2 className="font-display text-2xl text-ink">Push notifications</h2>
+          <div className="mt-4">
+            <PushEnableCard />
+          </div>
+        </Card>
+
+        <Card className="p-5">
           <h2 className="font-display text-2xl text-ink">Notification preferences</h2>
           <form
             action={async (formData) => {
@@ -58,11 +66,11 @@ export default async function SettingsPage() {
           >
             {(
               [
-                ["assignments", "New assignments"],
+                ["assignments", "New items & assignments"],
                 ["comments", "Comments & replies"],
                 ["mentions", "@partner mentions"],
                 ["decisions", "Decision responses needed"],
-                ["deadlines", "Approaching deadlines"],
+                ["deadlines", "Deadlines (3 days, 1 day, overdue)"],
                 ["contributions", "Contributions & milestones"],
               ] as const
             ).map(([key, label]) => (

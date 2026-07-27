@@ -4,15 +4,17 @@ import {
   CheckSquare,
   CircleDollarSign,
   Heart,
+  HeartPulse,
   Scale,
   Target,
 } from "lucide-react";
-import { formatShortDate } from "@/lib/dates";
+import { formatRelative, formatShortDate } from "@/lib/dates";
+import { insightForCheckIn, scoreTone } from "@/lib/check-in";
 import { formatCurrency, progressPercent } from "@/lib/money";
 import { habitProgressLabel } from "@/lib/progress";
 import { greetingForHour } from "@/lib/utils";
 import { statusLabel, statusTone } from "@/lib/status";
-import type { HouseholdContext, ItemWithMeta } from "@/types";
+import type { HouseholdContext, ItemWithMeta, WellnessCheckIn } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress";
@@ -26,17 +28,20 @@ export function DashboardView({
   decisions,
   goals,
   finances,
+  checkIns,
 }: {
   ctx: HouseholdContext;
   tasks: ItemWithMeta[];
   decisions: ItemWithMeta[];
   goals: ItemWithMeta[];
   finances: ItemWithMeta[];
+  checkIns: { mine: WellnessCheckIn | null; partner: WellnessCheckIn | null };
 }) {
   const hour = new Date().getHours();
   const names = ctx.partner
     ? `${ctx.currentUser.full_name} & ${ctx.partner.full_name}`
     : ctx.currentUser.full_name;
+  const partnerFirst = ctx.partner?.full_name.split(" ")[0];
 
   const openTasks = tasks.filter((t) => t.status !== "completed").slice(0, 4);
   const completedThisWeek = tasks.filter((t) => t.status === "completed").length;
@@ -72,6 +77,49 @@ export function DashboardView({
           <CreateItemButton />
         </div>
       </div>
+
+      <Card className="border-clay/25 bg-gradient-to-br from-pale-clay/35 via-card to-pale-sage/25 p-5 md:p-6">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <HeartPulse className="h-5 w-5 text-clay" />
+            <CardTitle>
+              {partnerFirst ? `How ${partnerFirst} is doing` : "Check-in"}
+            </CardTitle>
+          </div>
+          <Link href="/check-in" className="text-sm font-medium text-clay">
+            Open check-in →
+          </Link>
+        </CardHeader>
+        {checkIns.partner ? (
+          <div className="mt-4 space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {(
+                [
+                  ["Mental", checkIns.partner.mental],
+                  ["Physical", checkIns.partner.physical],
+                  ["Emotional", checkIns.partner.emotional],
+                ] as const
+              ).map(([label, score]) => (
+                <Badge key={label} tone={scoreTone(score)}>
+                  {label} {score}/5
+                </Badge>
+              ))}
+            </div>
+            <p className="text-[15px] leading-relaxed text-ink/90">
+              {insightForCheckIn(checkIns.partner, null, ctx.partner?.full_name)}
+            </p>
+            <p className="text-xs text-muted">
+              Shared {formatRelative(checkIns.partner.created_at)}
+            </p>
+          </div>
+        ) : (
+          <p className="mt-4 text-sm text-muted">
+            {partnerFirst
+              ? `${partnerFirst} hasn’t checked in yet. Share yours and invite them to do the same.`
+              : "Start a quick wellness check-in to stay in sync."}
+          </p>
+        )}
+      </Card>
 
       {/* Mobile metric grid */}
       <div className="grid grid-cols-2 gap-3 md:hidden">

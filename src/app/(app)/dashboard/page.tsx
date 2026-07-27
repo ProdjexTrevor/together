@@ -5,11 +5,12 @@ import { requireHousehold, Shell } from "@/lib/session";
 
 export default async function DashboardPage() {
   const { repo, ctx } = await requireHousehold();
-  const [tasks, decisions, goals, finances] = await Promise.all([
+  const [tasks, decisions, goals, finances, checkIns] = await Promise.all([
     repo.listItems("task"),
     repo.listItems("decision"),
     repo.listItems("goal"),
     repo.listItems("financial_target"),
+    repo.getLatestWellnessCheckIns(),
   ]);
 
   return (
@@ -20,6 +21,7 @@ export default async function DashboardPage() {
         decisions={decisions}
         goals={goals}
         finances={finances}
+        checkIns={checkIns}
       />
     </Shell>
   );

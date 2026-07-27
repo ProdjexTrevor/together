@@ -823,6 +823,81 @@ export const demoRepository = {
       }
     );
   },
+
+  async createWellnessCheckIn(input: {
+    mental: number;
+    physical: number;
+    emotional: number;
+    note?: string;
+  }) {
+    await ensureState();
+    const user = requireUser();
+    const hid = householdIdForUser(user.id);
+    if (!hid) throw new Error("No household");
+    const row = {
+      id: id("checkin"),
+      household_id: hid,
+      user_id: user.id,
+      mental: input.mental,
+      physical: input.physical,
+      emotional: input.emotional,
+      note: input.note?.trim() || null,
+      created_at: utcNowIso(),
+    };
+    state().checkIns.unshift(row);
+    const partnerId = ctxPartnerId(hid, user.id);
+    if (partnerId) {
+      state().notifications.unshift({
+        id: id("notif"),
+        user_id: partnerId,
+        household_id: hid,
+        item_id: null,
+        type: "check_in",
+        title: "New check-in",
+        body: `${user.full_name} shared how they're doing.`,
+        read_at: null,
+        created_at: utcNowIso(),
+      });
+    }
+    await persist();
+    return row;
+  },
+
+  async listWellnessCheckIns(userId?: string, limit = 14) {
+    await ensureState();
+    const user = requireUser();
+    const hid = householdIdForUser(user.id);
+    if (!hid) return [];
+    const target = userId ?? user.id;
+    // Household members can see each other's check-ins
+    const memberIds = state()
+      .members.filter((m) => m.household_id === hid && m.status === "active")
+      .map((m) => m.user_id);
+    if (!memberIds.includes(target)) throw new Error("Forbidden");
+    return state()
+      .checkIns.filter((c) => c.household_id === hid && c.user_id === target)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      .slice(0, limit);
+  },
+
+  async getLatestWellnessCheckIns() {
+    await ensureState();
+    const user = requireUser();
+    const hid = householdIdForUser(user.id);
+    if (!hid) return { mine: null, partner: null };
+    const partnerId = ctxPartnerId(hid, user.id);
+    const mine =
+      state()
+        .checkIns.filter((c) => c.household_id === hid && c.user_id === user.id)
+        .sort((a, b) => b.created_at.localeCompare(a.created_at))[0] ?? null;
+    const partner =
+      partnerId
+        ? state()
+            .checkIns.filter((c) => c.household_id === hid && c.user_id === partnerId)
+            .sort((a, b) => b.created_at.localeCompare(a.created_at))[0] ?? null
+        : null;
+    return { mine, partner };
+  },
 };
 
 function ctxPartnerId(householdId: string, userId: string): string | null {
