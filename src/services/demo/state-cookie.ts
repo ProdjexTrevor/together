@@ -64,6 +64,9 @@ function normalizeDemoState(state: DemoState): DemoState {
   return {
     ...state,
     checkIns: Array.isArray(state.checkIns) ? state.checkIns : [],
+    webauthnCredentials: Array.isArray(state.webauthnCredentials)
+      ? state.webauthnCredentials
+      : [],
   };
 }
 

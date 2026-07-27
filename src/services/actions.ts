@@ -20,6 +20,9 @@ export async function signInAction(formData: FormData) {
 
 export async function signOutAction() {
   await getRepository().signOut();
+  const { cookies } = await import("next/headers");
+  const jar = await cookies();
+  jar.delete("together_device_unlocked");
   revalidatePath("/", "layout");
 }
 

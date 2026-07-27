@@ -901,6 +901,65 @@ export const demoRepository = {
         : null;
     return { mine, partner };
   },
+
+  async listWebAuthnCredentials(userId?: string) {
+    await ensureState();
+    const user = requireUser();
+    const target = userId ?? user.id;
+    if (target !== user.id) throw new Error("Forbidden");
+    if (!Array.isArray(state().webauthnCredentials)) state().webauthnCredentials = [];
+    return state().webauthnCredentials.filter((c) => c.user_id === target);
+  },
+
+  async saveWebAuthnCredential(input: {
+    credential_id: string;
+    public_key: string;
+    counter: number;
+    transports?: string[];
+    device_type?: string;
+    backed_up?: boolean;
+  }) {
+    await ensureState();
+    const user = requireUser();
+    if (!Array.isArray(state().webauthnCredentials)) state().webauthnCredentials = [];
+    state().webauthnCredentials = state().webauthnCredentials.filter(
+      (c) => !(c.user_id === user.id && c.credential_id === input.credential_id)
+    );
+    state().webauthnCredentials.push({
+      id: id("webauthn"),
+      user_id: user.id,
+      credential_id: input.credential_id,
+      public_key: input.public_key,
+      counter: input.counter,
+      transports: input.transports ?? [],
+      device_type: input.device_type ?? "singleDevice",
+      backed_up: input.backed_up ?? false,
+      created_at: utcNowIso(),
+    });
+    await persist();
+    return { ok: true as const };
+  },
+
+  async updateWebAuthnCounter(credentialId: string, counter: number) {
+    await ensureState();
+    const user = requireUser();
+    const row = state().webauthnCredentials.find(
+      (c) => c.user_id === user.id && c.credential_id === credentialId
+    );
+    if (row) {
+      row.counter = counter;
+      await persist();
+    }
+  },
+
+  async clearWebAuthnCredentials(userId?: string) {
+    await ensureState();
+    const user = requireUser();
+    const target = userId ?? user.id;
+    if (target !== user.id) throw new Error("Forbidden");
+    state().webauthnCredentials = state().webauthnCredentials.filter((c) => c.user_id !== target);
+    await persist();
+  },
 };
 
 function ctxPartnerId(householdId: string, userId: string): string | null {

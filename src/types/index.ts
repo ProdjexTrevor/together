@@ -212,6 +212,18 @@ export interface WellnessCheckIn {
   created_at: string;
 }
 
+export interface WebAuthnCredential {
+  id: string;
+  user_id: string;
+  credential_id: string;
+  public_key: string;
+  counter: number;
+  transports: string[];
+  device_type: string;
+  backed_up: boolean;
+  created_at: string;
+}
+
 export interface HouseholdContext {
   household: Household;
   members: (HouseholdMember & { profile: Profile })[];

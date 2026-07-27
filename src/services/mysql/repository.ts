@@ -1188,4 +1188,68 @@ export const mysqlRepository = {
 
     return { mine: map(mineRows[0]), partner: map(partnerRows[0]) };
   },
+
+  async listWebAuthnCredentials(userId?: string) {
+    const user = await requireUser();
+    const target = userId ?? user.id;
+    if (target !== user.id) throw new Error("Forbidden");
+    const rows = await prisma.webAuthnCredential.findMany({ where: { userId: target } });
+    return rows.map((row) => ({
+      id: row.id,
+      user_id: row.userId,
+      credential_id: row.credentialId,
+      public_key: row.publicKey,
+      counter: row.counter,
+      transports: Array.isArray(row.transports) ? (row.transports as string[]) : [],
+      device_type: row.deviceType,
+      backed_up: row.backedUp,
+      created_at: row.createdAt.toISOString(),
+    }));
+  },
+
+  async saveWebAuthnCredential(input: {
+    credential_id: string;
+    public_key: string;
+    counter: number;
+    transports?: string[];
+    device_type?: string;
+    backed_up?: boolean;
+  }) {
+    const user = await requireUser();
+    await prisma.webAuthnCredential.upsert({
+      where: { credentialId: input.credential_id },
+      create: {
+        userId: user.id,
+        credentialId: input.credential_id,
+        publicKey: input.public_key,
+        counter: input.counter,
+        transports: input.transports ?? [],
+        deviceType: input.device_type ?? "singleDevice",
+        backedUp: input.backed_up ?? false,
+      },
+      update: {
+        publicKey: input.public_key,
+        counter: input.counter,
+        transports: input.transports ?? [],
+        deviceType: input.device_type ?? "singleDevice",
+        backedUp: input.backed_up ?? false,
+      },
+    });
+    return { ok: true as const };
+  },
+
+  async updateWebAuthnCounter(credentialId: string, counter: number) {
+    const user = await requireUser();
+    await prisma.webAuthnCredential.updateMany({
+      where: { userId: user.id, credentialId },
+      data: { counter },
+    });
+  },
+
+  async clearWebAuthnCredentials(userId?: string) {
+    const user = await requireUser();
+    const target = userId ?? user.id;
+    if (target !== user.id) throw new Error("Forbidden");
+    await prisma.webAuthnCredential.deleteMany({ where: { userId: target } });
+  },
 };

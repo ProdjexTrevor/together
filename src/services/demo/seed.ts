@@ -17,6 +17,7 @@ import type {
   Profile,
   TaskChecklistItem,
   WellnessCheckIn,
+  WebAuthnCredential,
 } from "@/types";
 
 export const DEMO_PASSWORD = "together123";
@@ -532,6 +533,7 @@ export function createSeedState() {
     notifications,
     notificationPrefs,
     checkIns: [] as WellnessCheckIn[],
+    webauthnCredentials: [] as WebAuthnCredential[],
     decidedOutcomes: {} as Record<string, { option_id: string; summary: string }>,
   };
 }

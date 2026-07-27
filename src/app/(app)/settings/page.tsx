@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { signOutAction, updateNotificationPrefsAction } from "@/services/actions";
 import { formatRelative } from "@/lib/dates";
 import { PushEnableCard } from "@/components/settings/push-enable-card";
+import { DeviceLockCard } from "@/components/settings/device-lock-card";
 
 export default async function SettingsPage() {
   const { repo, ctx } = await requireHousehold();
@@ -61,6 +62,13 @@ export default async function SettingsPage() {
           <h2 className="font-display text-2xl text-ink">Push notifications</h2>
           <div className="mt-4">
             <PushEnableCard />
+          </div>
+        </Card>
+
+        <Card className="p-5">
+          <h2 className="font-display text-2xl text-ink">Face ID / passcode</h2>
+          <div className="mt-4">
+            <DeviceLockCard />
           </div>
         </Card>
 
