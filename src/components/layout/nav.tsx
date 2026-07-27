@@ -94,10 +94,10 @@ export function MobileNav() {
   const pathname = usePathname();
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-4px_20px_rgba(36,53,45,0.06)] md:hidden"
       aria-label="Mobile"
     >
-      <ul className="mx-auto flex max-w-lg items-stretch justify-between">
+      <ul className="mx-auto flex h-14 max-w-lg items-stretch justify-between px-1">
         {mobileLinks.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
           return (
@@ -105,7 +105,7 @@ export function MobileNav() {
               <Link
                 href={href}
                 className={cn(
-                  "flex min-h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-medium",
+                  "flex h-full min-h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-medium",
                   active ? "text-clay" : "text-muted"
                 )}
               >
