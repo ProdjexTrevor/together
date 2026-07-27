@@ -1,0 +1,306 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Profile {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  fullName     String   @map("full_name")
+  avatarUrl    String?  @map("avatar_url")
+  timezone     String   @default("America/Chicago")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  createdHouseholds Household[]        @relation("HouseholdCreator")
+  memberships       HouseholdMember[]
+  invitationsSent   HouseholdInvitation[] @relation("InvitationSender")
+  itemsCreated      Item[]             @relation("ItemCreator")
+  itemsOwned        Item[]             @relation("ItemOwner")
+  decisionResponses DecisionResponse[]
+  contributions     FinancialContribution[]
+  comments          Comment[]
+  reactions         CommentReaction[]
+  activityEvents    ActivityEvent[]
+  notifications     Notification[]
+  notificationPrefs NotificationPreference?
+
+  @@map("profiles")
+}
+
+model Household {
+  id        String   @id @default(cuid())
+  name      String
+  createdBy String   @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  creator       Profile               @relation("HouseholdCreator", fields: [createdBy], references: [id])
+  members       HouseholdMember[]
+  invitations   HouseholdInvitation[]
+  items         Item[]
+  activityEvents ActivityEvent[]
+  notifications Notification[]
+
+  @@map("households")
+}
+
+model HouseholdMember {
+  id          String    @id @default(cuid())
+  householdId String    @map("household_id")
+  userId      String    @map("user_id")
+  role        String
+  status      String    @default("active")
+  joinedAt    DateTime? @map("joined_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user      Profile   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([householdId, userId])
+  @@map("household_members")
+}
+
+model HouseholdInvitation {
+  id          String    @id @default(cuid())
+  householdId String    @map("household_id")
+  email       String
+  token       String    @unique
+  invitedBy   String    @map("invited_by")
+  expiresAt   DateTime  @map("expires_at")
+  acceptedAt  DateTime? @map("accepted_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  inviter   Profile   @relation("InvitationSender", fields: [invitedBy], references: [id])
+
+  @@map("household_invitations")
+}
+
+model Item {
+  id          String    @id @default(cuid())
+  householdId String    @map("household_id")
+  type        String
+  title       String
+  description String?   @db.Text
+  status      String
+  createdBy   String    @map("created_by")
+  ownerId     String?   @map("owner_id")
+  priority    String    @default("normal")
+  startDate   DateTime? @map("start_date")
+  dueDate     DateTime? @map("due_date")
+  completedAt DateTime? @map("completed_at")
+  archivedAt  DateTime? @map("archived_at")
+  outcome     String?   @db.Text
+  decidedOptionId String? @map("decided_option_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  household     Household              @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  creator       Profile                @relation("ItemCreator", fields: [createdBy], references: [id])
+  owner         Profile?               @relation("ItemOwner", fields: [ownerId], references: [id])
+  checklist     TaskChecklistItem[]
+  options       DecisionOption[]
+  responses     DecisionResponse[]
+  goalDetails   GoalDetails?
+  milestones    GoalMilestone[]
+  financial     FinancialDetails?
+  contributions FinancialContribution[]
+  comments      Comment[]
+  activityEvents ActivityEvent[]
+  notifications Notification[]
+
+  @@index([householdId])
+  @@index([type])
+  @@index([status])
+  @@index([ownerId])
+  @@index([dueDate])
+  @@map("items")
+}
+
+model TaskChecklistItem {
+  id        String   @id @default(cuid())
+  itemId    String   @map("item_id")
+  title     String
+  completed Boolean  @default(false)
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@map("task_checklist_items")
+}
+
+model DecisionOption {
+  id          String   @id @default(cuid())
+  itemId      String   @map("item_id")
+  title       String
+  description String?  @db.Text
+  pros        Json
+  cons        Json
+  imageUrl    String?  @map("image_url")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  item      Item               @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  responses DecisionResponse[]
+
+  @@map("decision_options")
+}
+
+model DecisionResponse {
+  id        String   @id @default(cuid())
+  itemId    String   @map("item_id")
+  optionId  String   @map("option_id")
+  userId    String   @map("user_id")
+  note      String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  item   Item           @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  option DecisionOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  user   Profile        @relation(fields: [userId], references: [id])
+
+  @@unique([itemId, userId])
+  @@map("decision_responses")
+}
+
+model GoalDetails {
+  itemId          String  @id @map("item_id")
+  trackingType    String  @map("tracking_type")
+  targetValue     Float?  @map("target_value")
+  currentValue    Float   @default(0) @map("current_value")
+  unit            String?
+  weeklyFrequency Int?    @map("weekly_frequency")
+  streakCount     Int     @default(0) @map("streak_count")
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@map("goal_details")
+}
+
+model GoalMilestone {
+  id          String    @id @default(cuid())
+  itemId      String    @map("item_id")
+  title       String
+  targetDate  DateTime? @map("target_date")
+  completedAt DateTime? @map("completed_at")
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@map("goal_milestones")
+}
+
+model FinancialDetails {
+  itemId             String @id @map("item_id")
+  targetAmountCents  Int    @map("target_amount_cents")
+  currentAmountCents Int    @default(0) @map("current_amount_cents")
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@map("financial_details")
+}
+
+model FinancialContribution {
+  id            String   @id @default(cuid())
+  itemId        String   @map("item_id")
+  amountCents   Int      @map("amount_cents")
+  contributorId String   @map("contributor_id")
+  contributedAt DateTime @map("contributed_at")
+  note          String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  item        Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  contributor Profile @relation(fields: [contributorId], references: [id])
+
+  @@map("financial_contributions")
+}
+
+model Comment {
+  id        String    @id @default(cuid())
+  itemId    String    @map("item_id")
+  userId    String    @map("user_id")
+  parentId  String?   @map("parent_id")
+  body      String    @db.Text
+  editedAt  DateTime? @map("edited_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  item     Item              @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user     Profile           @relation(fields: [userId], references: [id])
+  parent   Comment?          @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[]         @relation("CommentThread")
+  reactions CommentReaction[]
+
+  @@map("comments")
+}
+
+model CommentReaction {
+  id        String   @id @default(cuid())
+  commentId String   @map("comment_id")
+  userId    String   @map("user_id")
+  emoji     String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    Profile @relation(fields: [userId], references: [id])
+
+  @@unique([commentId, userId, emoji])
+  @@map("comment_reactions")
+}
+
+model ActivityEvent {
+  id          String   @id @default(cuid())
+  householdId String   @map("household_id")
+  itemId      String?  @map("item_id")
+  actorId     String   @map("actor_id")
+  eventType   String   @map("event_type")
+  summary     String
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  item      Item?     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  actor     Profile   @relation(fields: [actorId], references: [id])
+
+  @@map("activity_events")
+}
+
+model Notification {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  householdId String    @map("household_id")
+  itemId      String?   @map("item_id")
+  type        String
+  title       String
+  body        String    @db.Text
+  readAt      DateTime? @map("read_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  user      Profile   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  item      Item?     @relation(fields: [itemId], references: [id], onDelete: SetNull)
+
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  userId        String  @id @map("user_id")
+  assignments   Boolean @default(true)
+  comments      Boolean @default(true)
+  mentions      Boolean @default(true)
+  decisions     Boolean @default(true)
+  deadlines     Boolean @default(true)
+  contributions Boolean @default(true)
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
