@@ -24,20 +24,35 @@ import {
   readDemoStateCookie,
   writeDemoStateCookie,
 } from "./state-cookie";
+import { cache } from "react";
 
 declare global {
   // eslint-disable-next-line no-var
   var __togetherDemoState: DemoState | undefined;
 }
 
-async function ensureState(): Promise<DemoState> {
+const loadRequestState = cache(async () => {
   const fromCookie = await readDemoStateCookie();
-  // Prefer persisted cookie/mirror so creates survive across Vercel requests.
-  // Fall back to a fresh seed when nothing is stored yet.
   globalThis.__togetherDemoState = fromCookie ?? createSeedState();
   const sessionId = await readDemoSessionUserId();
   globalThis.__togetherDemoState.sessionUserId = sessionId;
   return globalThis.__togetherDemoState;
+});
+
+async function ensureState(): Promise<DemoState> {
+  // Vitest has no per-request boundary; keep one mutable state object.
+  if (process.env.VITEST === "true") {
+    if (!globalThis.__togetherDemoState) {
+      globalThis.__togetherDemoState =
+        (await readDemoStateCookie()) ?? createSeedState();
+    }
+    const sessionId = await readDemoSessionUserId();
+    globalThis.__togetherDemoState.sessionUserId = sessionId;
+    return globalThis.__togetherDemoState;
+  }
+
+  // Next.js: hydrate once per request from the cookie so creates survive redirects.
+  return loadRequestState();
 }
 
 function state(): DemoState {
