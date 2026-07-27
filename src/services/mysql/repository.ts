@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { dollarsToCents } from "@/lib/money";
 import { utcNowIso } from "@/lib/dates";
+import { decryptSecret, encryptSecret } from "@/lib/crypto";
 import { typePath } from "@/lib/status";
 import { prisma } from "@/lib/prisma";
 import type { CreateItemInput } from "@/lib/validations";
@@ -1065,7 +1066,7 @@ export const mysqlRepository = {
         mental: input.mental,
         physical: input.physical,
         emotional: input.emotional,
-        note: input.note?.trim() || null,
+        note: encryptSecret(input.note),
       },
     });
 
@@ -1102,7 +1103,7 @@ export const mysqlRepository = {
       mental: row.mental,
       physical: row.physical,
       emotional: row.emotional,
-      note: row.note,
+      note: decryptSecret(row.note),
       created_at: row.createdAt.toISOString(),
     };
   },
@@ -1127,7 +1128,7 @@ export const mysqlRepository = {
       mental: row.mental,
       physical: row.physical,
       emotional: row.emotional,
-      note: row.note,
+      note: decryptSecret(row.note),
       created_at: row.createdAt.toISOString(),
     }));
   },
@@ -1160,7 +1161,7 @@ export const mysqlRepository = {
             mental: row.mental,
             physical: row.physical,
             emotional: row.emotional,
-            note: row.note,
+            note: decryptSecret(row.note),
             created_at: row.createdAt.toISOString(),
           }
         : null;

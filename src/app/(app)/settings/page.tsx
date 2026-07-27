@@ -38,6 +38,22 @@ export default async function SettingsPage() {
               <dt className="text-muted">Limit</dt>
               <dd className="text-ink">Two active partners for MVP</dd>
             </div>
+            <div>
+              <dt className="text-muted">Data storage</dt>
+              <dd className="text-ink">
+                {process.env.USE_MYSQL === "true" && process.env.DATABASE_URL
+                  ? "MySQL (durable)"
+                  : "Demo mode (browser cookies — not the database)"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-muted">Check-in notes</dt>
+              <dd className="text-ink">
+                {process.env.ENCRYPTION_KEY
+                  ? "Encrypted at rest"
+                  : "Encryption key not configured"}
+              </dd>
+            </div>
           </dl>
         </Card>
 
