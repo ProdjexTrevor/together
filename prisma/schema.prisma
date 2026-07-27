@@ -30,7 +30,7 @@ model Profile {
   notifications     Notification[]
   notificationPrefs NotificationPreference?
 
-  @@map("profiles")
+  @@map("together_profiles")
 }
 
 model Household {
@@ -47,7 +47,7 @@ model Household {
   activityEvents ActivityEvent[]
   notifications Notification[]
 
-  @@map("households")
+  @@map("together_households")
 }
 
 model HouseholdMember {
@@ -63,7 +63,7 @@ model HouseholdMember {
   user      Profile   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([householdId, userId])
-  @@map("household_members")
+  @@map("together_household_members")
 }
 
 model HouseholdInvitation {
@@ -79,7 +79,7 @@ model HouseholdInvitation {
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
   inviter   Profile   @relation("InvitationSender", fields: [invitedBy], references: [id])
 
-  @@map("household_invitations")
+  @@map("together_household_invitations")
 }
 
 model Item {
@@ -120,7 +120,7 @@ model Item {
   @@index([status])
   @@index([ownerId])
   @@index([dueDate])
-  @@map("items")
+  @@map("together_items")
 }
 
 model TaskChecklistItem {
@@ -133,7 +133,7 @@ model TaskChecklistItem {
 
   item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
-  @@map("task_checklist_items")
+  @@map("together_task_checklist_items")
 }
 
 model DecisionOption {
@@ -150,7 +150,7 @@ model DecisionOption {
   item      Item               @relation(fields: [itemId], references: [id], onDelete: Cascade)
   responses DecisionResponse[]
 
-  @@map("decision_options")
+  @@map("together_decision_options")
 }
 
 model DecisionResponse {
@@ -167,7 +167,7 @@ model DecisionResponse {
   user   Profile        @relation(fields: [userId], references: [id])
 
   @@unique([itemId, userId])
-  @@map("decision_responses")
+  @@map("together_decision_responses")
 }
 
 model GoalDetails {
@@ -181,7 +181,7 @@ model GoalDetails {
 
   item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
-  @@map("goal_details")
+  @@map("together_goal_details")
 }
 
 model GoalMilestone {
@@ -195,7 +195,7 @@ model GoalMilestone {
 
   item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
-  @@map("goal_milestones")
+  @@map("together_goal_milestones")
 }
 
 model FinancialDetails {
@@ -205,7 +205,7 @@ model FinancialDetails {
 
   item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
-  @@map("financial_details")
+  @@map("together_financial_details")
 }
 
 model FinancialContribution {
@@ -220,7 +220,7 @@ model FinancialContribution {
   item        Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
   contributor Profile @relation(fields: [contributorId], references: [id])
 
-  @@map("financial_contributions")
+  @@map("together_financial_contributions")
 }
 
 model Comment {
@@ -239,7 +239,7 @@ model Comment {
   replies  Comment[]         @relation("CommentThread")
   reactions CommentReaction[]
 
-  @@map("comments")
+  @@map("together_comments")
 }
 
 model CommentReaction {
@@ -253,7 +253,7 @@ model CommentReaction {
   user    Profile @relation(fields: [userId], references: [id])
 
   @@unique([commentId, userId, emoji])
-  @@map("comment_reactions")
+  @@map("together_comment_reactions")
 }
 
 model ActivityEvent {
@@ -270,7 +270,7 @@ model ActivityEvent {
   item      Item?     @relation(fields: [itemId], references: [id], onDelete: Cascade)
   actor     Profile   @relation(fields: [actorId], references: [id])
 
-  @@map("activity_events")
+  @@map("together_activity_events")
 }
 
 model Notification {
@@ -288,7 +288,7 @@ model Notification {
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
   item      Item?     @relation(fields: [itemId], references: [id], onDelete: SetNull)
 
-  @@map("notifications")
+  @@map("together_notifications")
 }
 
 model NotificationPreference {
@@ -302,5 +302,5 @@ model NotificationPreference {
 
   user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("notification_preferences")
+  @@map("together_notification_preferences")
 }

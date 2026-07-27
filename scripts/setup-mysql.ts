@@ -33,9 +33,7 @@ async function main() {
 
   const [tables] = await conn.query(
     `SELECT table_name FROM information_schema.tables
-     WHERE table_schema = ? AND table_name IN (
-       'profiles','households','household_members','items','financial_details','comments'
-     )
+     WHERE table_schema = ? AND table_name LIKE 'together_%'
      ORDER BY table_name`,
     [database]
   );

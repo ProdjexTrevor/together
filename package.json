@@ -13,6 +13,7 @@
     "test:e2e": "playwright test",
     "seed": "tsx scripts/seed.ts",
     "db:setup": "tsx scripts/setup-mysql.ts",
+    "db:rename": "tsx scripts/rename-together-tables.ts",
     "db:generate": "prisma generate",
     "db:types": "prisma generate",
     "postinstall": "prisma generate"

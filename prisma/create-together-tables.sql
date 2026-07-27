@@ -1,6 +1,6 @@
 -- Together tables only (does not touch existing tables)
 
-CREATE TABLE IF NOT EXISTS profiles (
+CREATE TABLE IF NOT EXISTS together_profiles (
   id VARCHAR(191) NOT NULL,
   email VARCHAR(191) NOT NULL,
   password_hash VARCHAR(191) NOT NULL,
@@ -9,22 +9,22 @@ CREATE TABLE IF NOT EXISTS profiles (
   timezone VARCHAR(191) NOT NULL DEFAULT 'America/Chicago',
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   updated_at DATETIME(3) NOT NULL,
-  UNIQUE INDEX profiles_email_key(email),
+  UNIQUE INDEX together_profiles_email_key(email),
   PRIMARY KEY (id)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS households (
+CREATE TABLE IF NOT EXISTS together_households (
   id VARCHAR(191) NOT NULL,
   name VARCHAR(191) NOT NULL,
   created_by VARCHAR(191) NOT NULL,
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   updated_at DATETIME(3) NOT NULL,
   PRIMARY KEY (id),
-  INDEX households_created_by_fkey(created_by),
-  CONSTRAINT households_created_by_fkey FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE RESTRICT ON UPDATE CASCADE
+  INDEX together_households_created_by_fkey(created_by),
+  CONSTRAINT together_households_created_by_fkey FOREIGN KEY (created_by) REFERENCES together_profiles(id) ON DELETE RESTRICT ON UPDATE CASCADE
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS household_members (
+CREATE TABLE IF NOT EXISTS together_household_members (
   id VARCHAR(191) NOT NULL,
   household_id VARCHAR(191) NOT NULL,
   user_id VARCHAR(191) NOT NULL,
@@ -32,14 +32,14 @@ CREATE TABLE IF NOT EXISTS household_members (
   status VARCHAR(191) NOT NULL DEFAULT 'active',
   joined_at DATETIME(3) NULL,
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  UNIQUE INDEX household_members_household_id_user_id_key(household_id, user_id),
+  UNIQUE INDEX together_household_members_household_id_user_id_key(household_id, user_id),
   PRIMARY KEY (id),
-  INDEX household_members_user_id_fkey(user_id),
-  CONSTRAINT household_members_household_id_fkey FOREIGN KEY (household_id) REFERENCES households(id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT household_members_user_id_fkey FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE ON UPDATE CASCADE
+  INDEX together_household_members_user_id_fkey(user_id),
+  CONSTRAINT together_household_members_household_id_fkey FOREIGN KEY (household_id) REFERENCES together_households(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT together_household_members_user_id_fkey FOREIGN KEY (user_id) REFERENCES together_profiles(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS household_invitations (
+CREATE TABLE IF NOT EXISTS together_household_invitations (
   id VARCHAR(191) NOT NULL,
   household_id VARCHAR(191) NOT NULL,
   email VARCHAR(191) NOT NULL,
@@ -48,15 +48,15 @@ CREATE TABLE IF NOT EXISTS household_invitations (
   expires_at DATETIME(3) NOT NULL,
   accepted_at DATETIME(3) NULL,
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  UNIQUE INDEX household_invitations_token_key(token),
+  UNIQUE INDEX together_household_invitations_token_key(token),
   PRIMARY KEY (id),
-  INDEX household_invitations_household_id_fkey(household_id),
-  INDEX household_invitations_invited_by_fkey(invited_by),
-  CONSTRAINT household_invitations_household_id_fkey FOREIGN KEY (household_id) REFERENCES households(id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT household_invitations_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES profiles(id) ON DELETE RESTRICT ON UPDATE CASCADE
+  INDEX together_household_invitations_household_id_fkey(household_id),
+  INDEX together_household_invitations_invited_by_fkey(invited_by),
+  CONSTRAINT together_household_invitations_household_id_fkey FOREIGN KEY (household_id) REFERENCES together_households(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT together_household_invitations_invited_by_fkey FOREIGN KEY (invited_by) REFERENCES together_profiles(id) ON DELETE RESTRICT ON UPDATE CASCADE
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS items (
+CREATE TABLE IF NOT EXISTS together_items (
   id VARCHAR(191) NOT NULL,
   household_id VARCHAR(191) NOT NULL,
   type VARCHAR(191) NOT NULL,
@@ -75,18 +75,18 @@ CREATE TABLE IF NOT EXISTS items (
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   updated_at DATETIME(3) NOT NULL,
   PRIMARY KEY (id),
-  INDEX items_household_id_idx(household_id),
-  INDEX items_type_idx(type),
-  INDEX items_status_idx(status),
-  INDEX items_owner_id_idx(owner_id),
-  INDEX items_due_date_idx(due_date),
-  INDEX items_created_by_fkey(created_by),
-  CONSTRAINT items_household_id_fkey FOREIGN KEY (household_id) REFERENCES households(id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT items_created_by_fkey FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT items_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES profiles(id) ON DELETE SET NULL ON UPDATE CASCADE
+  INDEX together_items_household_id_idx(household_id),
+  INDEX together_items_type_idx(type),
+  INDEX together_items_status_idx(status),
+  INDEX together_items_owner_id_idx(owner_id),
+  INDEX together_items_due_date_idx(due_date),
+  INDEX together_items_created_by_fkey(created_by),
+  CONSTRAINT together_items_household_id_fkey FOREIGN KEY (household_id) REFERENCES together_households(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT together_items_created_by_fkey FOREIGN KEY (created_by) REFERENCES together_profiles(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT together_items_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES together_profiles(id) ON DELETE SET NULL ON UPDATE CASCADE
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS task_checklist_items (
+CREATE TABLE IF NOT EXISTS together_task_checklist_items (
   id VARCHAR(191) NOT NULL,
   item_id VARCHAR(191) NOT NULL,
   title VARCHAR(191) NOT NULL,
@@ -94,11 +94,11 @@ CREATE TABLE IF NOT EXISTS task_checklist_items (
   sort_order INT NOT NULL DEFAULT 0,
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   PRIMARY KEY (id),
-  INDEX task_checklist_items_item_id_fkey(item_id),
-  CONSTRAINT task_checklist_items_item_id_fkey FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE ON UPDATE CASCADE
+  INDEX together_task_checklist_items_item_id_fkey(item_id),
+  CONSTRAINT together_task_checklist_items_item_id_fkey FOREIGN KEY (item_id) REFERENCES together_items(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS decision_options (
+CREATE TABLE IF NOT EXISTS together_decision_options (
   id VARCHAR(191) NOT NULL,
   item_id VARCHAR(191) NOT NULL,
   title VARCHAR(191) NOT NULL,
@@ -109,11 +109,11 @@ CREATE TABLE IF NOT EXISTS decision_options (
   sort_order INT NOT NULL DEFAULT 0,
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   PRIMARY KEY (id),
-  INDEX decision_options_item_id_fkey(item_id),
-  CONSTRAINT decision_options_item_id_fkey FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE ON UPDATE CASCADE
+  INDEX together_decision_options_item_id_fkey(item_id),
+  CONSTRAINT together_decision_options_item_id_fkey FOREIGN KEY (item_id) REFERENCES together_items(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS decision_responses (
+CREATE TABLE IF NOT EXISTS together_decision_responses (
   id VARCHAR(191) NOT NULL,
   item_id VARCHAR(191) NOT NULL,
   option_id VARCHAR(191) NOT NULL,
@@ -121,16 +121,16 @@ CREATE TABLE IF NOT EXISTS decision_responses (
   note TEXT NULL,
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   updated_at DATETIME(3) NOT NULL,
-  UNIQUE INDEX decision_responses_item_id_user_id_key(item_id, user_id),
+  UNIQUE INDEX together_decision_responses_item_id_user_id_key(item_id, user_id),
   PRIMARY KEY (id),
-  INDEX decision_responses_option_id_fkey(option_id),
-  INDEX decision_responses_user_id_fkey(user_id),
-  CONSTRAINT decision_responses_item_id_fkey FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT decision_responses_option_id_fkey FOREIGN KEY (option_id) REFERENCES decision_options(id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT decision_responses_user_id_fkey FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE RESTRICT ON UPDATE CASCADE
+  INDEX together_decision_responses_option_id_fkey(option_id),
+  INDEX together_decision_responses_user_id_fkey(user_id),
+  CONSTRAINT together_decision_responses_item_id_fkey FOREIGN KEY (item_id) REFERENCES together_items(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT together_decision_responses_option_id_fkey FOREIGN KEY (option_id) REFERENCES together_decision_options(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT together_decision_responses_user_id_fkey FOREIGN KEY (user_id) REFERENCES together_profiles(id) ON DELETE RESTRICT ON UPDATE CASCADE
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS goal_details (
+CREATE TABLE IF NOT EXISTS together_goal_details (
   item_id VARCHAR(191) NOT NULL,
   tracking_type VARCHAR(191) NOT NULL,
   target_value DOUBLE NULL,
@@ -139,10 +139,10 @@ CREATE TABLE IF NOT EXISTS goal_details (
   weekly_frequency INT NULL,
   streak_count INT NOT NULL DEFAULT 0,
   PRIMARY KEY (item_id),
-  CONSTRAINT goal_details_item_id_fkey FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT together_goal_details_item_id_fkey FOREIGN KEY (item_id) REFERENCES together_items(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS goal_milestones (
+CREATE TABLE IF NOT EXISTS together_goal_milestones (
   id VARCHAR(191) NOT NULL,
   item_id VARCHAR(191) NOT NULL,
   title VARCHAR(191) NOT NULL,
@@ -151,19 +151,19 @@ CREATE TABLE IF NOT EXISTS goal_milestones (
   sort_order INT NOT NULL DEFAULT 0,
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   PRIMARY KEY (id),
-  INDEX goal_milestones_item_id_fkey(item_id),
-  CONSTRAINT goal_milestones_item_id_fkey FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE ON UPDATE CASCADE
+  INDEX together_goal_milestones_item_id_fkey(item_id),
+  CONSTRAINT together_goal_milestones_item_id_fkey FOREIGN KEY (item_id) REFERENCES together_items(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS financial_details (
+CREATE TABLE IF NOT EXISTS together_financial_details (
   item_id VARCHAR(191) NOT NULL,
   target_amount_cents INT NOT NULL,
   current_amount_cents INT NOT NULL DEFAULT 0,
   PRIMARY KEY (item_id),
-  CONSTRAINT financial_details_item_id_fkey FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT together_financial_details_item_id_fkey FOREIGN KEY (item_id) REFERENCES together_items(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS financial_contributions (
+CREATE TABLE IF NOT EXISTS together_financial_contributions (
   id VARCHAR(191) NOT NULL,
   item_id VARCHAR(191) NOT NULL,
   amount_cents INT NOT NULL,
@@ -172,13 +172,13 @@ CREATE TABLE IF NOT EXISTS financial_contributions (
   note TEXT NULL,
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   PRIMARY KEY (id),
-  INDEX financial_contributions_item_id_fkey(item_id),
-  INDEX financial_contributions_contributor_id_fkey(contributor_id),
-  CONSTRAINT financial_contributions_item_id_fkey FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT financial_contributions_contributor_id_fkey FOREIGN KEY (contributor_id) REFERENCES profiles(id) ON DELETE RESTRICT ON UPDATE CASCADE
+  INDEX together_financial_contributions_item_id_fkey(item_id),
+  INDEX together_financial_contributions_contributor_id_fkey(contributor_id),
+  CONSTRAINT together_financial_contributions_item_id_fkey FOREIGN KEY (item_id) REFERENCES together_items(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT together_financial_contributions_contributor_id_fkey FOREIGN KEY (contributor_id) REFERENCES together_profiles(id) ON DELETE RESTRICT ON UPDATE CASCADE
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS comments (
+CREATE TABLE IF NOT EXISTS together_comments (
   id VARCHAR(191) NOT NULL,
   item_id VARCHAR(191) NOT NULL,
   user_id VARCHAR(191) NOT NULL,
@@ -188,28 +188,28 @@ CREATE TABLE IF NOT EXISTS comments (
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   updated_at DATETIME(3) NOT NULL,
   PRIMARY KEY (id),
-  INDEX comments_item_id_fkey(item_id),
-  INDEX comments_user_id_fkey(user_id),
-  INDEX comments_parent_id_fkey(parent_id),
-  CONSTRAINT comments_item_id_fkey FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT comments_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE ON UPDATE CASCADE
+  INDEX together_comments_item_id_fkey(item_id),
+  INDEX together_comments_user_id_fkey(user_id),
+  INDEX together_comments_parent_id_fkey(parent_id),
+  CONSTRAINT together_comments_item_id_fkey FOREIGN KEY (item_id) REFERENCES together_items(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT together_comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES together_profiles(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT together_comments_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES together_comments(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS comment_reactions (
+CREATE TABLE IF NOT EXISTS together_comment_reactions (
   id VARCHAR(191) NOT NULL,
   comment_id VARCHAR(191) NOT NULL,
   user_id VARCHAR(191) NOT NULL,
   emoji VARCHAR(191) NOT NULL,
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  UNIQUE INDEX comment_reactions_comment_id_user_id_emoji_key(comment_id, user_id, emoji),
+  UNIQUE INDEX together_comment_reactions_comment_id_user_id_emoji_key(comment_id, user_id, emoji),
   PRIMARY KEY (id),
-  INDEX comment_reactions_user_id_fkey(user_id),
-  CONSTRAINT comment_reactions_comment_id_fkey FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT comment_reactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE RESTRICT ON UPDATE CASCADE
+  INDEX together_comment_reactions_user_id_fkey(user_id),
+  CONSTRAINT together_comment_reactions_comment_id_fkey FOREIGN KEY (comment_id) REFERENCES together_comments(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT together_comment_reactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES together_profiles(id) ON DELETE RESTRICT ON UPDATE CASCADE
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS activity_events (
+CREATE TABLE IF NOT EXISTS together_activity_events (
   id VARCHAR(191) NOT NULL,
   household_id VARCHAR(191) NOT NULL,
   item_id VARCHAR(191) NULL,
@@ -219,15 +219,15 @@ CREATE TABLE IF NOT EXISTS activity_events (
   metadata JSON NULL,
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   PRIMARY KEY (id),
-  INDEX activity_events_household_id_fkey(household_id),
-  INDEX activity_events_item_id_fkey(item_id),
-  INDEX activity_events_actor_id_fkey(actor_id),
-  CONSTRAINT activity_events_household_id_fkey FOREIGN KEY (household_id) REFERENCES households(id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT activity_events_item_id_fkey FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT activity_events_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES profiles(id) ON DELETE RESTRICT ON UPDATE CASCADE
+  INDEX together_activity_events_household_id_fkey(household_id),
+  INDEX together_activity_events_item_id_fkey(item_id),
+  INDEX together_activity_events_actor_id_fkey(actor_id),
+  CONSTRAINT together_activity_events_household_id_fkey FOREIGN KEY (household_id) REFERENCES together_households(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT together_activity_events_item_id_fkey FOREIGN KEY (item_id) REFERENCES together_items(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT together_activity_events_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES together_profiles(id) ON DELETE RESTRICT ON UPDATE CASCADE
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS notifications (
+CREATE TABLE IF NOT EXISTS together_notifications (
   id VARCHAR(191) NOT NULL,
   user_id VARCHAR(191) NOT NULL,
   household_id VARCHAR(191) NOT NULL,
@@ -238,15 +238,15 @@ CREATE TABLE IF NOT EXISTS notifications (
   read_at DATETIME(3) NULL,
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   PRIMARY KEY (id),
-  INDEX notifications_user_id_fkey(user_id),
-  INDEX notifications_household_id_fkey(household_id),
-  INDEX notifications_item_id_fkey(item_id),
-  CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT notifications_household_id_fkey FOREIGN KEY (household_id) REFERENCES households(id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT notifications_item_id_fkey FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE SET NULL ON UPDATE CASCADE
+  INDEX together_notifications_user_id_fkey(user_id),
+  INDEX together_notifications_household_id_fkey(household_id),
+  INDEX together_notifications_item_id_fkey(item_id),
+  CONSTRAINT together_notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES together_profiles(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT together_notifications_household_id_fkey FOREIGN KEY (household_id) REFERENCES together_households(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT together_notifications_item_id_fkey FOREIGN KEY (item_id) REFERENCES together_items(id) ON DELETE SET NULL ON UPDATE CASCADE
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS notification_preferences (
+CREATE TABLE IF NOT EXISTS together_notification_preferences (
   user_id VARCHAR(191) NOT NULL,
   assignments BOOLEAN NOT NULL DEFAULT true,
   comments BOOLEAN NOT NULL DEFAULT true,
@@ -255,5 +255,5 @@ CREATE TABLE IF NOT EXISTS notification_preferences (
   deadlines BOOLEAN NOT NULL DEFAULT true,
   contributions BOOLEAN NOT NULL DEFAULT true,
   PRIMARY KEY (user_id),
-  CONSTRAINT notification_preferences_user_id_fkey FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT together_notification_preferences_user_id_fkey FOREIGN KEY (user_id) REFERENCES together_profiles(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
