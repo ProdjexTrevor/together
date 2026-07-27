@@ -10,7 +10,12 @@ import { DEMO_PASSWORD } from "@/services/demo/repository";
 import { redirect } from "next/navigation";
 import { getRepository } from "@/services";
 
-export default async function SignInPage() {
+export default async function SignInPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
   const user = await getRepository().getSessionUser();
   if (user) {
     const ctx = await getRepository().getHouseholdContext();
@@ -19,19 +24,29 @@ export default async function SignInPage() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-10">
-      <Logo className="mb-8 justify-center" />
+      <div className="mb-8 flex justify-center">
+        <Logo href="/sign-in" />
+      </div>
       <Card className="p-6">
-        <h1 className="font-display text-3xl text-ink">Welcome back</h1>
+        <h1 className="font-display text-3xl text-ink">Sign in</h1>
         <p className="mt-2 text-sm text-muted">
-          Sign in to your shared household. Demo accounts use password{" "}
-          <code className="rounded bg-page px-1">{DEMO_PASSWORD}</code>.
+          Enter your household email to continue. Demo password:{" "}
+          <code className="rounded bg-page px-1">{DEMO_PASSWORD}</code>
         </p>
+        {error ? (
+          <p className="mt-3 rounded-[12px] bg-pale-clay px-3 py-2 text-sm text-clay">{error}</p>
+        ) : null}
 
         <form
           action={async (formData) => {
             "use server";
-            await signInAction(formData);
-            redirect("/");
+            try {
+              await signInAction(formData);
+            } catch (e) {
+              const message = e instanceof Error ? e.message : "Sign in failed";
+              redirect(`/sign-in?error=${encodeURIComponent(message)}`);
+            }
+            redirect("/dashboard");
           }}
           className="mt-6 space-y-4"
         >
@@ -63,16 +78,27 @@ export default async function SignInPage() {
           </Button>
         </form>
 
+        <div className="mt-4 rounded-[14px] bg-page/80 p-3 text-sm text-muted">
+          <p className="font-medium text-ink">Demo accounts</p>
+          <p className="mt-1">trevor@together.app</p>
+          <p>shonda@together.app</p>
+        </div>
+
         <form
           action={async (formData) => {
             "use server";
             formData.set("mode", "magic");
-            await signInAction(formData);
-            redirect("/");
+            try {
+              await signInAction(formData);
+            } catch (e) {
+              const message = e instanceof Error ? e.message : "Sign in failed";
+              redirect(`/sign-in?error=${encodeURIComponent(message)}`);
+            }
+            redirect("/dashboard");
           }}
           className="mt-4 space-y-3 border-t border-border pt-4"
         >
-          <p className="text-sm text-muted">Or use a magic link (demo signs you in instantly):</p>
+          <p className="text-sm text-muted">Or continue as Shonda instantly:</p>
           <Input
             name="email"
             type="email"
@@ -81,7 +107,7 @@ export default async function SignInPage() {
             defaultValue="shonda@together.app"
           />
           <Button type="submit" variant="secondary" className="w-full">
-            Send magic link
+            Continue with magic link
           </Button>
         </form>
       </Card>

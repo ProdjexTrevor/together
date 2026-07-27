@@ -14,6 +14,11 @@ import type {
   Profile,
 } from "@/types";
 import { DEMO_PASSWORD, IDS, createSeedState, type DemoState } from "./seed";
+import {
+  clearDemoSessionUserId,
+  readDemoSessionUserId,
+  writeDemoSessionUserId,
+} from "./session-cookie";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -120,6 +125,7 @@ export const demoRepository = {
     if (!profile) throw new Error("No demo account found for that email");
     if (password && password !== DEMO_PASSWORD) throw new Error("Invalid password");
     s.sessionUserId = profile.id;
+    await writeDemoSessionUserId(profile.id);
     return profile;
   },
 
@@ -129,12 +135,16 @@ export const demoRepository = {
 
   async signOut() {
     state().sessionUserId = null;
+    await clearDemoSessionUserId();
   },
 
   async getSessionUser() {
     const s = state();
-    if (!s.sessionUserId) return null;
-    return s.profiles.find((p) => p.id === s.sessionUserId) ?? null;
+    const cookieUserId = await readDemoSessionUserId();
+    const userId = cookieUserId ?? s.sessionUserId;
+    if (!userId) return null;
+    s.sessionUserId = userId;
+    return s.profiles.find((p) => p.id === userId) ?? null;
   },
 
   async getHouseholdContext(): Promise<HouseholdContext | null> {
@@ -170,6 +180,7 @@ export const demoRepository = {
       };
       s.profiles.push(user);
       s.sessionUserId = user.id;
+      await writeDemoSessionUserId(user.id);
     } else {
       user.full_name = fullName;
       user.updated_at = utcNowIso();
@@ -240,6 +251,7 @@ export const demoRepository = {
       };
       s.profiles.push(user);
       s.sessionUserId = user.id;
+      await writeDemoSessionUserId(user.id);
     }
 
     invitation.accepted_at = utcNowIso();
