@@ -23,7 +23,7 @@ Open [http://localhost:3000](http://localhost:3000).
 Demo accounts:
 
 - `trevor@together.app` / `together123`
-- `shonda@together.app` / `together123`
+- `chanda@together.app` / `together123`
 
 ## Environment
 
@@ -77,7 +77,7 @@ src/
   components/          UI, layout, create flow, comments, items
   lib/                 money, dates, progress, validation
   services/
-    demo/              in-memory seeded adapter (Trevor & Shonda)
+    demo/              in-memory seeded adapter (Trevor & Chanda)
     actions.ts         server actions
     index.ts           repository factory
 supabase/migrations/   schema + RLS

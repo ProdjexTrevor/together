@@ -81,7 +81,7 @@ export default async function SignInPage({
         <div className="mt-4 rounded-[14px] bg-page/80 p-3 text-sm text-muted">
           <p className="font-medium text-ink">Demo accounts</p>
           <p className="mt-1">trevor@together.app</p>
-          <p>shonda@together.app</p>
+          <p>chanda@together.app</p>
         </div>
 
         <form
@@ -98,13 +98,13 @@ export default async function SignInPage({
           }}
           className="mt-4 space-y-3 border-t border-border pt-4"
         >
-          <p className="text-sm text-muted">Or continue as Shonda instantly:</p>
+          <p className="text-sm text-muted">Or continue as Chanda instantly:</p>
           <Input
             name="email"
             type="email"
             required
             placeholder="you@example.com"
-            defaultValue="shonda@together.app"
+            defaultValue="chanda@together.app"
           />
           <Button type="submit" variant="secondary" className="w-full">
             Continue with magic link
