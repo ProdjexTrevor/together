@@ -1,37 +1,46 @@
 /**
- * Push required env vars from local .env to Vercel (production + preview).
- * Usage: pnpm exec tsx scripts/push-vercel-env.ts
+ * Push Supabase/runtime env vars from local .env to Vercel (production + preview).
+ * Pipes exact bytes (no CRLF) so USE_* flags compare correctly at runtime.
  */
 import "dotenv/config";
 import { spawnSync } from "child_process";
 
 const REQUIRED = [
   "USE_MYSQL",
+  "USE_SUPABASE",
   "DATABASE_URL",
-  "MYSQL_HOST",
-  "MYSQL_PORT",
-  "MYSQL_USER",
-  "MYSQL_PASSWORD",
-  "MYSQL_DATABASE",
+  "DIRECT_URL",
   "ENCRYPTION_KEY",
   "NEXT_PUBLIC_VAPID_PUBLIC_KEY",
   "VAPID_PRIVATE_KEY",
   "VAPID_SUBJECT",
   "CRON_SECRET",
+  "BASECAMP_PASSCODE",
+  "NEXT_PUBLIC_SUPABASE_URL",
+  "SUPABASE_URL",
+  "SUPABASE_PUBLISHABLE_KEY",
+  "SUPABASE_SECRET_KEY",
 ] as const;
 
 const SENSITIVE = new Set([
   "DATABASE_URL",
-  "MYSQL_PASSWORD",
+  "DIRECT_URL",
   "ENCRYPTION_KEY",
   "VAPID_PRIVATE_KEY",
   "CRON_SECRET",
+  "BASECAMP_PASSCODE",
+  "SUPABASE_SECRET_KEY",
+  "SUPABASE_PUBLISHABLE_KEY",
 ]);
 
 const targets = ["production", "preview"] as const;
 
 function addEnv(name: string, value: string, target: string) {
-  const args = ["vercel", "env", "add", name, target, "--force"];
+  spawnSync("npx", ["vercel", "env", "rm", name, target, "--yes"], {
+    encoding: "utf8",
+    shell: true,
+  });
+  const args = ["vercel", "env", "add", name, target];
   if (SENSITIVE.has(name)) args.push("--sensitive");
   const result = spawnSync("npx", args, {
     input: value,
@@ -48,8 +57,8 @@ function addEnv(name: string, value: string, target: string) {
 }
 
 for (const name of REQUIRED) {
-  const value = process.env[name];
-  if (!value) {
+  const value = process.env[name]?.trim();
+  if (value === undefined || value === "") {
     console.error(`Missing ${name} in local .env — aborting.`);
     process.exit(1);
   }

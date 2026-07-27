@@ -232,7 +232,7 @@ export const mysqlRepository = {
       const message = error instanceof Error ? error.message : "Sign in failed";
       if (/can't reach database|p1001|econnrefused|etimedout/i.test(message)) {
         throw new Error(
-          "Can't reach the MySQL server from Vercel. Allow inbound access to internal.prodjex.com:3306 from the internet (or use a publicly reachable database host)."
+          "Can't reach the database server. Check DATABASE_URL / DIRECT_URL and that the host allows connections from this environment."
         );
       }
       throw error instanceof Error ? error : new Error(message);

@@ -4,6 +4,7 @@ import {
   BASECAMP_MISSION_SEED,
   BASECAMP_YNM_SEED,
 } from "@/lib/basecamp-seed";
+import { usePrismaDatabase } from "@/lib/db-mode";
 import { utcNowIso } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
 import { getRepository } from "@/services";
@@ -24,7 +25,7 @@ import type {
 import { cache } from "react";
 
 function useMysql() {
-  return process.env.USE_MYSQL === "true" && Boolean(process.env.DATABASE_URL?.trim());
+  return usePrismaDatabase();
 }
 
 function id(prefix: string) {

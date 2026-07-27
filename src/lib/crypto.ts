@@ -21,7 +21,10 @@ export function encryptSecret(plaintext: string | null | undefined): string | nu
   const key = getKey();
   if (!key) {
     // Fail closed in production so notes are never stored plaintext by accident.
-    if (process.env.NODE_ENV === "production" && process.env.USE_MYSQL === "true") {
+    if (
+      process.env.NODE_ENV === "production" &&
+      (process.env.USE_MYSQL === "true" || process.env.USE_SUPABASE === "true")
+    ) {
       throw new Error("ENCRYPTION_KEY is required to store private check-in notes");
     }
     return value;

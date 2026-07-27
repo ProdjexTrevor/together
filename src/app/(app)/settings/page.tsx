@@ -42,9 +42,11 @@ export default async function SettingsPage() {
             <div>
               <dt className="text-muted">Data storage</dt>
               <dd className="text-ink">
-                {process.env.USE_MYSQL === "true" && process.env.DATABASE_URL
-                  ? "MySQL (durable)"
-                  : "Demo mode (browser cookies — not the database)"}
+                {process.env.USE_SUPABASE === "true" && process.env.DATABASE_URL
+                  ? "Supabase Postgres (durable)"
+                  : process.env.USE_MYSQL === "true" && process.env.DATABASE_URL
+                    ? "MySQL (durable)"
+                    : "Demo mode (browser cookies — not the database)"}
               </dd>
             </div>
             <div>

@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server";
+import { usePrismaDatabase } from "@/lib/db-mode";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   const info: Record<string, unknown> = {
     useMysql: process.env.USE_MYSQL === "true",
+    useSupabase: process.env.USE_SUPABASE === "true",
+    usePrisma: usePrismaDatabase(),
     hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
     databaseUrlLength: process.env.DATABASE_URL?.length ?? 0,
     hasEncryptionKey: Boolean(process.env.ENCRYPTION_KEY),
   };
 
-  if (process.env.USE_MYSQL === "true" && process.env.DATABASE_URL) {
+  if (usePrismaDatabase()) {
     try {
       const { prisma } = await import("@/lib/prisma");
       await prisma.$queryRaw`SELECT 1`;
