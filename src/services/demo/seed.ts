@@ -512,7 +512,7 @@ export function createSeedState() {
   ];
 
   return {
-    sessionUserId: IDS.trevor as string | null,
+    sessionUserId: null as string | null,
     profiles,
     households,
     members,

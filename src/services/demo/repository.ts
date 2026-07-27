@@ -141,10 +141,14 @@ export const demoRepository = {
   async getSessionUser() {
     const s = state();
     const cookieUserId = await readDemoSessionUserId();
-    const userId = cookieUserId ?? s.sessionUserId;
-    if (!userId) return null;
-    s.sessionUserId = userId;
-    return s.profiles.find((p) => p.id === userId) ?? null;
+    // Only trust the cookie for auth — never fall back to in-memory session,
+    // which would auto-sign-in everyone on a warm serverless instance.
+    if (!cookieUserId) {
+      s.sessionUserId = null;
+      return null;
+    }
+    s.sessionUserId = cookieUserId;
+    return s.profiles.find((p) => p.id === cookieUserId) ?? null;
   },
 
   async getHouseholdContext(): Promise<HouseholdContext | null> {
