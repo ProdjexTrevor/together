@@ -10,15 +10,15 @@ declare global {
 export async function readDemoSessionUserId(): Promise<string | null> {
   try {
     const jar = await cookies();
-    const value = jar.get(DEMO_SESSION_COOKIE)?.value;
-    if (value) {
-      globalThis.__togetherDemoSessionMirror = value;
-      return value;
-    }
+    // Always trust the request cookie jar when available — never fall back to a
+    // previous request's in-memory mirror (that caused sign-in ↔ dashboard loops).
+    const value = jar.get(DEMO_SESSION_COOKIE)?.value ?? null;
+    globalThis.__togetherDemoSessionMirror = value;
+    return value;
   } catch {
-    // Outside request context
+    // Outside a request (tests): allow the mirror.
+    return globalThis.__togetherDemoSessionMirror ?? null;
   }
-  return globalThis.__togetherDemoSessionMirror ?? null;
 }
 
 export async function writeDemoSessionUserId(userId: string) {

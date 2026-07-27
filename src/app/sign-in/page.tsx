@@ -10,8 +10,12 @@ import { redirect } from "next/navigation";
 import { getRepository } from "@/services";
 
 function safeRedirectPath(next: string | undefined) {
-  if (next && next.startsWith("/") && !next.startsWith("//")) return next;
-  return "/dashboard";
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return "/dashboard";
+  const blocked = ["/sign-in", "/onboarding", "/invite"];
+  if (blocked.some((path) => next === path || next.startsWith(`${path}/`))) {
+    return "/dashboard";
+  }
+  return next;
 }
 
 export default async function SignInPage({
