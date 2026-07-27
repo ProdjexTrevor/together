@@ -20,9 +20,19 @@ export default async function SignInPage({
   searchParams: Promise<{ error?: string; next?: string }>;
 }) {
   const { error, next } = await searchParams;
-  const user = await getRepository().getSessionUser();
+  let user = null;
+  try {
+    user = await getRepository().getSessionUser();
+  } catch {
+    user = null;
+  }
   if (user) {
-    const ctx = await getRepository().getHouseholdContext();
+    let ctx = null;
+    try {
+      ctx = await getRepository().getHouseholdContext();
+    } catch {
+      ctx = null;
+    }
     redirect(ctx ? safeRedirectPath(next) : "/onboarding");
   }
 

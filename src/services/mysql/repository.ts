@@ -241,53 +241,63 @@ export const mysqlRepository = {
   },
 
   async getSessionUser() {
-    const userId = await readDemoSessionUserId();
-    if (!userId) return null;
-    const row = await prisma.profile.findUnique({ where: { id: userId } });
-    return row ? mapProfile(row) : null;
+    try {
+      const userId = await readDemoSessionUserId();
+      if (!userId) return null;
+      const row = await prisma.profile.findUnique({ where: { id: userId } });
+      return row ? mapProfile(row) : null;
+    } catch (error) {
+      console.error("[mysql] getSessionUser failed", error);
+      return null;
+    }
   },
 
   async getHouseholdContext(): Promise<HouseholdContext | null> {
-    const user = await this.getSessionUser();
-    if (!user) return null;
-    const membership = await prisma.householdMember.findFirst({
-      where: { userId: user.id, status: "active" },
-      include: {
-        household: true,
-      },
-    });
-    if (!membership) return null;
+    try {
+      const user = await this.getSessionUser();
+      if (!user) return null;
+      const membership = await prisma.householdMember.findFirst({
+        where: { userId: user.id, status: "active" },
+        include: {
+          household: true,
+        },
+      });
+      if (!membership) return null;
 
-    const members = await prisma.householdMember.findMany({
-      where: { householdId: membership.householdId, status: "active" },
-      include: { user: true },
-    });
+      const members = await prisma.householdMember.findMany({
+        where: { householdId: membership.householdId, status: "active" },
+        include: { user: true },
+      });
 
-    const mapped = members.map((m) => ({
-      id: m.id,
-      household_id: m.householdId,
-      user_id: m.userId,
-      role: m.role as "creator" | "partner",
-      status: m.status as "active" | "invited" | "left",
-      joined_at: m.joinedAt?.toISOString() ?? null,
-      created_at: m.createdAt.toISOString(),
-      profile: mapProfile(m.user),
-    }));
+      const mapped = members.map((m) => ({
+        id: m.id,
+        household_id: m.householdId,
+        user_id: m.userId,
+        role: m.role as "creator" | "partner",
+        status: m.status as "active" | "invited" | "left",
+        joined_at: m.joinedAt?.toISOString() ?? null,
+        created_at: m.createdAt.toISOString(),
+        profile: mapProfile(m.user),
+      }));
 
-    const partner = mapped.find((m) => m.user_id !== user.id)?.profile ?? null;
+      const partner = mapped.find((m) => m.user_id !== user.id)?.profile ?? null;
 
-    return {
-      household: {
-        id: membership.household.id,
-        name: membership.household.name,
-        created_by: membership.household.createdBy,
-        created_at: membership.household.createdAt.toISOString(),
-        updated_at: membership.household.updatedAt.toISOString(),
-      },
-      members: mapped,
-      currentUser: user,
-      partner,
-    };
+      return {
+        household: {
+          id: membership.household.id,
+          name: membership.household.name,
+          created_by: membership.household.createdBy,
+          created_at: membership.household.createdAt.toISOString(),
+          updated_at: membership.household.updatedAt.toISOString(),
+        },
+        members: mapped,
+        currentUser: user,
+        partner,
+      };
+    } catch (error) {
+      console.error("[mysql] getHouseholdContext failed", error);
+      return null;
+    }
   },
 
   async createHousehold(fullName: string, householdName: string, partnerEmail?: string) {

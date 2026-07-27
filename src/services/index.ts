@@ -1,15 +1,17 @@
 import { demoRepository } from "./demo/repository";
-import { mysqlRepository } from "./mysql/repository";
 
 /**
  * Data access entry point.
  * Prefer MySQL when USE_MYSQL=true and DATABASE_URL is set.
+ * MySQL/Prisma is loaded lazily so missing DB env cannot crash every page import.
  */
 export function getRepository() {
   const useMysql =
-    process.env.USE_MYSQL === "true" && Boolean(process.env.DATABASE_URL);
+    process.env.USE_MYSQL === "true" && Boolean(process.env.DATABASE_URL?.trim());
 
   if (useMysql) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { mysqlRepository } = require("./mysql/repository") as typeof import("./mysql/repository");
     return mysqlRepository;
   }
 
