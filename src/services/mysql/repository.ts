@@ -219,14 +219,24 @@ export const mysqlRepository = {
   },
 
   async signIn(email: string, password?: string) {
-    const row = await prisma.profile.findUnique({ where: { email: email.toLowerCase() } });
-    if (!row) throw new Error("No account found for that email");
-    if (password) {
-      const ok = await bcrypt.compare(password, row.passwordHash);
-      if (!ok) throw new Error("Invalid password");
+    try {
+      const row = await prisma.profile.findUnique({ where: { email: email.toLowerCase() } });
+      if (!row) throw new Error("No account found for that email");
+      if (password) {
+        const ok = await bcrypt.compare(password, row.passwordHash);
+        if (!ok) throw new Error("Invalid password");
+      }
+      await writeDemoSessionUserId(row.id);
+      return mapProfile(row);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Sign in failed";
+      if (/can't reach database|p1001|econnrefused|etimedout/i.test(message)) {
+        throw new Error(
+          "Can't reach the MySQL server from Vercel. Allow inbound access to internal.prodjex.com:3306 from the internet (or use a publicly reachable database host)."
+        );
+      }
+      throw error instanceof Error ? error : new Error(message);
     }
-    await writeDemoSessionUserId(row.id);
-    return mapProfile(row);
   },
 
   async signInMagic(email: string) {
