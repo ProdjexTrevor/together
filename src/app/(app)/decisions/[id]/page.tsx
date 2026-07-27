@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { CalendarDays } from "lucide-react";
 import { DiscussionPanel } from "@/components/comments/discussion-panel";
 import { DecisionOptions } from "@/components/items/decision-options";
+import { DeleteItemButton } from "@/components/items/delete-item-button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatLongDate } from "@/lib/dates";
@@ -54,7 +55,10 @@ export default async function DecisionDetailPage({
               ) : null}
             </div>
             <div className="flex flex-col items-end gap-2">
-              <Badge tone={statusTone(item.status)}>{statusLabel(item.status)}</Badge>
+              <div className="flex items-center gap-2">
+                <Badge tone={statusTone(item.status)}>{statusLabel(item.status)}</Badge>
+                <DeleteItemButton itemId={item.id} itemType={item.type} title={item.title} />
+              </div>
               {item.due_date ? (
                 <p className="inline-flex items-center gap-1.5 text-sm text-clay">
                   <CalendarDays className="h-4 w-4" />

@@ -413,6 +413,41 @@ export const demoRepository = {
     return enrichItem(item);
   },
 
+  async deleteItem(itemId: string) {
+    const user = requireUser();
+    const s = state();
+    const item = s.items.find((i) => i.id === itemId);
+    if (!item) throw new Error("Item not found");
+    assertHouseholdAccess(item.household_id, user.id);
+
+    const type = item.type;
+    const commentIds = new Set(s.comments.filter((c) => c.item_id === itemId).map((c) => c.id));
+
+    s.items = s.items.filter((i) => i.id !== itemId);
+    s.checklist = s.checklist.filter((c) => c.item_id !== itemId);
+    s.options = s.options.filter((o) => o.item_id !== itemId);
+    s.responses = s.responses.filter((r) => r.item_id !== itemId);
+    s.goalDetails = s.goalDetails.filter((g) => g.item_id !== itemId);
+    s.milestones = s.milestones.filter((m) => m.item_id !== itemId);
+    s.financialDetails = s.financialDetails.filter((f) => f.item_id !== itemId);
+    s.contributions = s.contributions.filter((c) => c.item_id !== itemId);
+    s.comments = s.comments.filter((c) => c.item_id !== itemId);
+    s.reactions = s.reactions.filter((r) => !commentIds.has(r.comment_id));
+    s.activity = s.activity.filter((a) => a.item_id !== itemId);
+    s.notifications = s.notifications.filter((n) => n.item_id !== itemId);
+    delete s.decidedOutcomes[itemId];
+
+    pushActivity(
+      item.household_id,
+      null,
+      user.id,
+      "deleted",
+      `${user.full_name} deleted "${item.title}"`
+    );
+
+    return { id: itemId, type };
+  },
+
   async updateItemStatus(itemId: string, status: Item["status"]) {
     const user = requireUser();
     const item = state().items.find((i) => i.id === itemId);

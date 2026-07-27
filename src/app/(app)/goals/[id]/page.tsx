@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DiscussionPanel } from "@/components/comments/discussion-panel";
 import { GoalProgressForm } from "@/components/items/goal-progress-form";
+import { DeleteItemButton } from "@/components/items/delete-item-button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress";
@@ -43,7 +44,10 @@ export default async function GoalDetailPage({
                 <p className="mt-3 text-[15px] text-muted">{item.description}</p>
               ) : null}
             </div>
-            <Badge tone={statusTone(item.status)}>{statusLabel(item.status)}</Badge>
+            <div className="flex items-center gap-2">
+              <Badge tone={statusTone(item.status)}>{statusLabel(item.status)}</Badge>
+              <DeleteItemButton itemId={item.id} itemType={item.type} title={item.title} />
+            </div>
           </div>
 
           <Card className="p-5">

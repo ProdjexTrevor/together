@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { CalendarDays } from "lucide-react";
 import { DiscussionPanel } from "@/components/comments/discussion-panel";
 import { AddContributionButton } from "@/components/items/add-contribution-button";
+import { DeleteItemButton } from "@/components/items/delete-item-button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress";
@@ -42,10 +43,11 @@ export default async function FinanceDetailPage({
 
   return (
     <Shell ctx={ctx}>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <Link href="/finances" className="text-sm font-medium text-muted hover:text-ink">
           ← Financial Target
         </Link>
+        <DeleteItemButton itemId={item.id} itemType={item.type} title={item.title} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr]">

@@ -104,6 +104,16 @@ export async function updateNotificationPrefsAction(prefs: Record<string, boolea
   return result;
 }
 
+export async function deleteItemAction(itemId: string) {
+  const deleted = await getRepository().deleteItem(itemId);
+  const listPath = `/${pathForType(deleted.type)}`;
+  revalidatePath("/dashboard");
+  revalidatePath("/calendar");
+  revalidatePath(listPath);
+  revalidatePath(`${listPath}/${itemId}`);
+  return deleted;
+}
+
 function pathForType(type: string) {
   switch (type) {
     case "task":

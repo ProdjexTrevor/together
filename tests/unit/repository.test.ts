@@ -25,4 +25,10 @@ describe("demo authorization", () => {
     const updated = await demoRepository.addContribution(IDS.financeEmergency, 100);
     expect(updated.financial!.current_amount_cents).toBe(beforeCents + 10000);
   });
+
+  it("deletes an item and blocks further access", async () => {
+    await demoRepository.signIn("trevor@together.app", "together123");
+    await demoRepository.deleteItem(IDS.taskGrocery);
+    expect(await demoRepository.getItem(IDS.taskGrocery)).toBeNull();
+  });
 });

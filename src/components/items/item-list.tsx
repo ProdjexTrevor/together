@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { TaskCheckbox } from "./task-checkbox";
+import { DeleteItemButton } from "./delete-item-button";
 import { ProgressBar } from "@/components/ui/progress";
 import { formatCurrency, progressPercent } from "@/lib/money";
 
@@ -60,7 +61,15 @@ export function ItemList({
                         <p className="mt-1 line-clamp-2 text-sm text-muted">{item.description}</p>
                       ) : null}
                     </Link>
-                    <Badge tone={statusTone(item.status)}>{statusLabel(item.status)}</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge tone={statusTone(item.status)}>{statusLabel(item.status)}</Badge>
+                      <DeleteItemButton
+                        itemId={item.id}
+                        itemType={item.type}
+                        title={item.title}
+                        variant="icon"
+                      />
+                    </div>
                   </div>
 
                   {item.type === "goal" && item.goal ? (

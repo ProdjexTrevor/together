@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DiscussionPanel } from "@/components/comments/discussion-panel";
 import { TaskCheckbox } from "@/components/items/task-checkbox";
+import { DeleteItemButton } from "@/components/items/delete-item-button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatLongDate } from "@/lib/dates";
@@ -41,7 +42,10 @@ export default async function TaskDetailPage({
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <h1 className="font-display text-4xl text-ink md:text-5xl">{item.title}</h1>
-                <Badge tone={statusTone(item.status)}>{statusLabel(item.status)}</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge tone={statusTone(item.status)}>{statusLabel(item.status)}</Badge>
+                  <DeleteItemButton itemId={item.id} itemType={item.type} title={item.title} />
+                </div>
               </div>
               {item.description ? (
                 <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted">
