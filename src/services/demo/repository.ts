@@ -19,10 +19,25 @@ import {
   readDemoSessionUserId,
   writeDemoSessionUserId,
 } from "./session-cookie";
+import {
+  clearDemoStateCookie,
+  readDemoStateCookie,
+  writeDemoStateCookie,
+} from "./state-cookie";
 
 declare global {
   // eslint-disable-next-line no-var
   var __togetherDemoState: DemoState | undefined;
+}
+
+async function ensureState(): Promise<DemoState> {
+  const fromCookie = await readDemoStateCookie();
+  // Prefer persisted cookie/mirror so creates survive across Vercel requests.
+  // Fall back to a fresh seed when nothing is stored yet.
+  globalThis.__togetherDemoState = fromCookie ?? createSeedState();
+  const sessionId = await readDemoSessionUserId();
+  globalThis.__togetherDemoState.sessionUserId = sessionId;
+  return globalThis.__togetherDemoState;
 }
 
 function state(): DemoState {
@@ -30,6 +45,10 @@ function state(): DemoState {
     globalThis.__togetherDemoState = createSeedState();
   }
   return globalThis.__togetherDemoState;
+}
+
+async function persist() {
+  await writeDemoStateCookie(state());
 }
 
 function id(prefix: string) {
@@ -115,17 +134,21 @@ function pushActivity(
 }
 
 export const demoRepository = {
-  reset() {
+  async reset() {
+    await clearDemoStateCookie();
+    await clearDemoSessionUserId();
     globalThis.__togetherDemoState = createSeedState();
   },
 
   async signIn(email: string, password?: string) {
+    await ensureState();
     const s = state();
     const profile = s.profiles.find((p) => p.email.toLowerCase() === email.toLowerCase());
     if (!profile) throw new Error("No demo account found for that email");
     if (password && password !== DEMO_PASSWORD) throw new Error("Invalid password");
     s.sessionUserId = profile.id;
     await writeDemoSessionUserId(profile.id);
+    await persist();
     return profile;
   },
 
@@ -134,15 +157,16 @@ export const demoRepository = {
   },
 
   async signOut() {
+    await ensureState();
     state().sessionUserId = null;
     await clearDemoSessionUserId();
+    await persist();
   },
 
   async getSessionUser() {
+    await ensureState();
     const s = state();
     const cookieUserId = await readDemoSessionUserId();
-    // Only trust the cookie for auth — never fall back to in-memory session,
-    // which would auto-sign-in everyone on a warm serverless instance.
     if (!cookieUserId) {
       s.sessionUserId = null;
       return null;
@@ -154,6 +178,7 @@ export const demoRepository = {
   async getHouseholdContext(): Promise<HouseholdContext | null> {
     const user = await this.getSessionUser();
     if (!user) return null;
+    await ensureState();
     const s = state();
     const membership = s.members.find((m) => m.user_id === user.id && m.status === "active");
     if (!membership) return null;
@@ -170,6 +195,7 @@ export const demoRepository = {
   },
 
   async createHousehold(fullName: string, householdName: string, partnerEmail?: string) {
+    await ensureState();
     const s = state();
     let user = await this.getSessionUser();
     if (!user) {
@@ -223,14 +249,17 @@ export const demoRepository = {
       });
     }
 
+    await persist();
     return { household, invitationToken };
   },
 
   async getInvitation(token: string) {
+    await ensureState();
     return state().invitations.find((i) => i.token === token) ?? null;
   },
 
   async acceptInvitation(token: string, fullName: string) {
+    await ensureState();
     const s = state();
     const invitation = s.invitations.find((i) => i.token === token);
     if (!invitation) throw new Error("Invitation not found");
@@ -268,12 +297,14 @@ export const demoRepository = {
       joined_at: utcNowIso(),
       created_at: utcNowIso(),
     });
+    await persist();
     return user;
   },
 
   async listItems(type?: ItemType, opts?: { archived?: boolean; search?: string }) {
     const ctx = await this.getHouseholdContext();
     if (!ctx) return [];
+    await ensureState();
     const s = state();
     let items = s.items.filter((i) => i.household_id === ctx.household.id);
     if (type) items = items.filter((i) => i.type === type);
@@ -293,6 +324,7 @@ export const demoRepository = {
   },
 
   async getItem(itemId: string) {
+    await ensureState();
     const user = requireUser();
     const item = state().items.find((i) => i.id === itemId);
     if (!item) return null;
@@ -301,6 +333,7 @@ export const demoRepository = {
   },
 
   async createItem(input: CreateItemInput) {
+    await ensureState();
     const ctx = await this.getHouseholdContext();
     if (!ctx) throw new Error("No household");
     const ownerId =
@@ -382,14 +415,14 @@ export const demoRepository = {
     }
 
     if (input.type === "financial_target") {
-      const target = dollarsToCents(input.target_amount ?? 0);
-      const current = dollarsToCents(input.current_amount ?? 0);
+      const target = dollarsToCents(Number(input.target_amount ?? 0));
+      const current = dollarsToCents(Number(input.current_amount ?? 0));
       s.financialDetails.push({
         item_id: item.id,
         target_amount_cents: target,
         current_amount_cents: current,
       });
-      item.status = current >= target ? "reached" : current > 0 ? "on_track" : "not_started";
+      item.status = current >= target && target > 0 ? "reached" : current > 0 ? "on_track" : "not_started";
     }
 
     pushActivity(
@@ -414,10 +447,12 @@ export const demoRepository = {
       });
     }
 
+    await persist();
     return enrichItem(item);
   },
 
   async deleteItem(itemId: string) {
+    await ensureState();
     const user = requireUser();
     const s = state();
     const item = s.items.find((i) => i.id === itemId);
@@ -449,10 +484,12 @@ export const demoRepository = {
       `${user.full_name} deleted "${item.title}"`
     );
 
+    await persist();
     return { id: itemId, type };
   },
 
   async updateItemStatus(itemId: string, status: Item["status"]) {
+    await ensureState();
     const user = requireUser();
     const item = state().items.find((i) => i.id === itemId);
     if (!item) throw new Error("Item not found");
@@ -469,10 +506,12 @@ export const demoRepository = {
       "status_changed",
       `Status changed to ${status.replaceAll("_", " ")}`
     );
+    await persist();
     return enrichItem(item);
   },
 
   async toggleTaskComplete(itemId: string) {
+    await ensureState();
     const item = await this.getItem(itemId);
     if (!item || item.type !== "task") throw new Error("Task not found");
     const next = item.status === "completed" ? "not_started" : "completed";
@@ -480,6 +519,7 @@ export const demoRepository = {
   },
 
   async recordDecisionResponse(itemId: string, optionId: string, note?: string) {
+    await ensureState();
     const user = requireUser();
     const item = state().items.find((i) => i.id === itemId);
     if (!item) throw new Error("Decision not found");
@@ -510,10 +550,12 @@ export const demoRepository = {
       "response_recorded",
       `${user.full_name} recorded a response`
     );
+    await persist();
     return enrichItem(item);
   },
 
   async decideOutcome(itemId: string, optionId: string, summary: string) {
+    await ensureState();
     const user = requireUser();
     const item = state().items.find((i) => i.id === itemId);
     if (!item) throw new Error("Decision not found");
@@ -523,10 +565,12 @@ export const demoRepository = {
     item.completed_at = utcNowIso();
     item.updated_at = utcNowIso();
     pushActivity(item.household_id, item.id, user.id, "decided", `Decision finalized`);
+    await persist();
     return enrichItem(item);
   },
 
   async addContribution(itemId: string, amountDollars: number, note?: string) {
+    await ensureState();
     const user = requireUser();
     const item = state().items.find((i) => i.id === itemId);
     if (!item || item.type !== "financial_target") throw new Error("Target not found");
@@ -561,10 +605,11 @@ export const demoRepository = {
       `${user.full_name} added a contribution`
     );
 
-    if (ctxPartnerId(item.household_id, user.id)) {
+    const partnerId = ctxPartnerId(item.household_id, user.id);
+    if (partnerId) {
       s.notifications.unshift({
         id: id("n"),
-        user_id: ctxPartnerId(item.household_id, user.id)!,
+        user_id: partnerId,
         household_id: item.household_id,
         item_id: item.id,
         type: "contribution",
@@ -575,10 +620,12 @@ export const demoRepository = {
       });
     }
 
+    await persist();
     return enrichItem(item);
   },
 
   async updateGoalProgress(itemId: string, currentValue: number) {
+    await ensureState();
     const user = requireUser();
     const item = state().items.find((i) => i.id === itemId);
     if (!item) throw new Error("Goal not found");
@@ -600,10 +647,12 @@ export const demoRepository = {
       "progress_updated",
       `${user.full_name} updated progress`
     );
+    await persist();
     return enrichItem(item);
   },
 
   async listComments(itemId: string) {
+    await ensureState();
     const item = await this.getItem(itemId);
     if (!item) return [];
     return state()
@@ -612,12 +661,14 @@ export const demoRepository = {
   },
 
   async listReactions(itemId: string) {
+    await ensureState();
     const comments = await this.listComments(itemId);
     const ids = new Set(comments.map((c) => c.id));
     return state().reactions.filter((r) => ids.has(r.comment_id));
   },
 
   async addComment(itemId: string, body: string, parentId?: string | null) {
+    await ensureState();
     const user = requireUser();
     const item = state().items.find((i) => i.id === itemId);
     if (!item) throw new Error("Item not found");
@@ -650,10 +701,12 @@ export const demoRepository = {
         created_at: utcNowIso(),
       });
     }
+    await persist();
     return comment;
   },
 
   async addReaction(commentId: string, emoji: string) {
+    await ensureState();
     const user = requireUser();
     const comment = state().comments.find((c) => c.id === commentId);
     if (!comment) throw new Error("Comment not found");
@@ -671,10 +724,12 @@ export const demoRepository = {
       created_at: utcNowIso(),
     };
     state().reactions.push(reaction);
+    await persist();
     return reaction;
   },
 
   async listActivity(itemId: string) {
+    await ensureState();
     const item = await this.getItem(itemId);
     if (!item) return [];
     return state()
@@ -683,6 +738,7 @@ export const demoRepository = {
   },
 
   async listNotifications() {
+    await ensureState();
     const user = requireUser();
     return state()
       .notifications.filter((n) => n.user_id === user.id)
@@ -690,13 +746,16 @@ export const demoRepository = {
   },
 
   async markNotificationRead(notificationId: string) {
+    await ensureState();
     const user = requireUser();
     const n = state().notifications.find((x) => x.id === notificationId && x.user_id === user.id);
     if (n) n.read_at = utcNowIso();
+    await persist();
     return n ?? null;
   },
 
   async getProfilesByIds(ids: string[]) {
+    await ensureState();
     return state().profiles.filter((p) => ids.includes(p.id));
   },
 
@@ -713,6 +772,7 @@ export const demoRepository = {
     deadlines: boolean;
     contributions: boolean;
   }>) {
+    await ensureState();
     const user = requireUser();
     const s = state();
     let row = s.notificationPrefs.find((p) => p.user_id === user.id);
@@ -729,10 +789,12 @@ export const demoRepository = {
       s.notificationPrefs.push(row);
     }
     Object.assign(row, prefs);
+    await persist();
     return row;
   },
 
   async getNotificationPrefs() {
+    await ensureState();
     const user = requireUser();
     return (
       state().notificationPrefs.find((p) => p.user_id === user.id) ?? {
@@ -756,3 +818,4 @@ function ctxPartnerId(householdId: string, userId: string): string | null {
 }
 
 export { IDS, DEMO_PASSWORD };
+

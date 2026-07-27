@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { demoRepository, IDS } from "@/services/demo/repository";
 
 describe("demo authorization", () => {
-  beforeEach(() => {
-    demoRepository.reset();
+  beforeEach(async () => {
+    await demoRepository.reset();
   });
 
   it("allows household members to read shared items", async () => {
