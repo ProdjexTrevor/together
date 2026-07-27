@@ -24,10 +24,14 @@ export function Modal({
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
+    const scrollRoot = document.querySelector<HTMLElement>("[data-app-scroll]");
+    const previous = scrollRoot?.style.overflow ?? "";
+    if (scrollRoot) scrollRoot.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
+      if (scrollRoot) scrollRoot.style.overflow = previous;
     };
   }, [open, onClose]);
 

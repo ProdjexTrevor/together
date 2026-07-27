@@ -96,7 +96,7 @@ export function MobileNav() {
   const pathname = usePathname();
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-4px_20px_rgba(36,53,45,0.06)] md:hidden"
+      className="border-t border-border bg-card pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-4px_20px_rgba(36,53,45,0.06)]"
       aria-label="Mobile"
     >
       <ul className="mx-auto flex h-14 max-w-lg items-stretch justify-between px-1">

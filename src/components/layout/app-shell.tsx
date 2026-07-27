@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import { DesktopNav, MobileNav } from "./nav";
 import { CreateItemButton } from "@/components/create/create-item-button";
 
@@ -16,32 +14,27 @@ export function AppShell({
   children: React.ReactNode;
   showMobileCreate?: boolean;
 }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   return (
-    <div className="min-h-dvh">
+    <div className="flex h-dvh max-h-dvh flex-col overflow-hidden">
       <DesktopNav currentName={currentName} partnerName={partnerName} />
-      <main className="mx-auto max-w-6xl px-4 py-6 pb-28 md:px-6 md:py-8 md:pb-8">
+
+      <main
+        data-app-scroll
+        className="relative mx-auto w-full max-w-6xl flex-1 overflow-y-auto overscroll-y-contain px-4 py-6 pb-8 md:px-6 md:py-8"
+      >
         {children}
       </main>
 
-      {mounted
-        ? createPortal(
-            <>
-              <MobileNav />
-              {showMobileCreate ? (
-                <div className="fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px)+0.75rem)] right-4 z-50 md:hidden">
-                  <CreateItemButton compact />
-                </div>
-              ) : null}
-            </>,
-            document.body
-          )
-        : null}
+      <div className="relative z-50 shrink-0 md:hidden">
+        {showMobileCreate ? (
+          <div className="pointer-events-none absolute bottom-[calc(100%+0.75rem)] right-4 z-50">
+            <div className="pointer-events-auto">
+              <CreateItemButton compact />
+            </div>
+          </div>
+        ) : null}
+        <MobileNav />
+      </div>
     </div>
   );
 }
