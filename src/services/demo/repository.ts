@@ -844,6 +844,7 @@ export const demoRepository = {
       note: input.note?.trim() || null,
       created_at: utcNowIso(),
     };
+    state().checkIns ??= [];
     state().checkIns.unshift(row);
     const partnerId = ctxPartnerId(hid, user.id);
     if (partnerId) {
@@ -874,6 +875,7 @@ export const demoRepository = {
       .members.filter((m) => m.household_id === hid && m.status === "active")
       .map((m) => m.user_id);
     if (!memberIds.includes(target)) throw new Error("Forbidden");
+    if (!Array.isArray(state().checkIns)) state().checkIns = [];
     return state()
       .checkIns.filter((c) => c.household_id === hid && c.user_id === target)
       .sort((a, b) => b.created_at.localeCompare(a.created_at))
@@ -885,6 +887,7 @@ export const demoRepository = {
     const user = requireUser();
     const hid = householdIdForUser(user.id);
     if (!hid) return { mine: null, partner: null };
+    if (!Array.isArray(state().checkIns)) state().checkIns = [];
     const partnerId = ctxPartnerId(hid, user.id);
     const mine =
       state()

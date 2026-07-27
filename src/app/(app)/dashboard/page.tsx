@@ -10,7 +10,7 @@ export default async function DashboardPage() {
     repo.listItems("decision"),
     repo.listItems("goal"),
     repo.listItems("financial_target"),
-    repo.getLatestWellnessCheckIns(),
+    repo.getLatestWellnessCheckIns().catch(() => ({ mine: null, partner: null })),
   ]);
 
   return (

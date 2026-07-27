@@ -45,7 +45,7 @@ export async function readDemoStateCookie(): Promise<DemoState | null> {
           encoded += jar.get(`${COOKIE_PREFIX}${i}`)?.value ?? "";
         }
         const parsed = decodeState(encoded);
-        if (parsed) return parsed;
+        if (parsed) return normalizeDemoState(parsed);
       }
     }
   } catch {
@@ -53,9 +53,18 @@ export async function readDemoStateCookie(): Promise<DemoState | null> {
   }
 
   if (globalThis.__togetherDemoCookieMirror) {
-    return decodeState(globalThis.__togetherDemoCookieMirror);
+    const parsed = decodeState(globalThis.__togetherDemoCookieMirror);
+    return parsed ? normalizeDemoState(parsed) : null;
   }
   return null;
+}
+
+/** Older cookies may lack newer collections — fill defaults so reads don't crash. */
+function normalizeDemoState(state: DemoState): DemoState {
+  return {
+    ...state,
+    checkIns: Array.isArray(state.checkIns) ? state.checkIns : [],
+  };
 }
 
 export async function writeDemoStateCookie(state: DemoState) {
