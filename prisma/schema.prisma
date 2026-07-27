@@ -374,3 +374,78 @@ model WebAuthnCredential {
   @@index([userId])
   @@map("together_webauthn_credentials")
 }
+
+/// Discreet intimate module — all text fields stored encrypted (titleEnc etc.)
+model BasecampYnm {
+  id         String   @id @default(cuid())
+  householdId String  @map("household_id")
+  titleEnc   String   @map("title_enc") @db.Text
+  categoryEnc String  @map("category_enc") @db.Text
+  notesEnc   String?  @map("notes_enc") @db.Text
+  voteA      String   @default("unset") @map("vote_a")
+  voteB      String   @default("unset") @map("vote_b")
+  createdBy  String   @map("created_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([householdId])
+  @@map("together_basecamp_ynm")
+}
+
+model BasecampCoupon {
+  id          String    @id @default(cuid())
+  householdId String    @map("household_id")
+  titleEnc    String    @map("title_enc") @db.Text
+  bodyEnc     String    @map("body_enc") @db.Text
+  fromUserId  String    @map("from_user_id")
+  toUserId    String?   @map("to_user_id")
+  status      String    @default("available")
+  redeemedAt  DateTime? @map("redeemed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([householdId])
+  @@map("together_basecamp_coupons")
+}
+
+model BasecampMission {
+  id          String    @id @default(cuid())
+  householdId String    @map("household_id")
+  titleEnc    String    @map("title_enc") @db.Text
+  detailsEnc  String?   @map("details_enc") @db.Text
+  rewardEnc   String    @map("reward_enc") @db.Text
+  assignedTo  String?   @map("assigned_to")
+  status      String    @default("open")
+  createdBy   String    @map("created_by")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([householdId])
+  @@map("together_basecamp_missions")
+}
+
+model BasecampGoal {
+  id          String   @id @default(cuid())
+  householdId String   @map("household_id")
+  titleEnc    String   @map("title_enc") @db.Text
+  detailsEnc  String?  @map("details_enc") @db.Text
+  target      Int      @default(1)
+  progress    Int      @default(0)
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([householdId])
+  @@map("together_basecamp_goals")
+}
+
+model BasecampNote {
+  id          String   @id @default(cuid())
+  householdId String   @map("household_id")
+  authorId    String   @map("author_id")
+  bodyEnc     String   @map("body_enc") @db.Text
+  heat        Int      @default(3)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([householdId])
+  @@map("together_basecamp_notes")
+}

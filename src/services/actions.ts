@@ -23,6 +23,7 @@ export async function signOutAction() {
   const { cookies } = await import("next/headers");
   const jar = await cookies();
   jar.delete("together_device_unlocked");
+  jar.delete("together_basecamp_ok");
   revalidatePath("/", "layout");
 }
 

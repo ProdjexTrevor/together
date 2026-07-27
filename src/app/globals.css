@@ -55,3 +55,28 @@ body {
 .font-display {
   font-family: var(--font-fraunces), Georgia, serif;
 }
+
+/* Intimate Basecamp theme — darker, ember, discreet */
+html.basecamp-mode {
+  --page: #140e12;
+  --card: #1f161c;
+  --ink: #f6e9ee;
+  --sage: #c48996;
+  --pale-sage: #2a1c22;
+  --clay: #e4576b;
+  --pale-clay: #3a2229;
+  --muted: #b59aa3;
+  --border: #3d2a32;
+  --success: #c48996;
+  --warning: #e8a07a;
+  --destructive: #ff6b7a;
+}
+
+html.basecamp-mode body,
+.basecamp-shell {
+  background:
+    radial-gradient(ellipse 70% 45% at 20% -10%, rgba(228, 87, 107, 0.22), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 100% 0%, rgba(90, 30, 50, 0.45), transparent 50%),
+    var(--page);
+  color: var(--ink);
+}

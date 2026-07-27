@@ -534,6 +534,14 @@ export function createSeedState() {
     notificationPrefs,
     checkIns: [] as WellnessCheckIn[],
     webauthnCredentials: [] as WebAuthnCredential[],
+    basecamp: {
+      ynm: [] as import("@/types/basecamp").BasecampYnmItem[],
+      coupons: [] as import("@/types/basecamp").BasecampCoupon[],
+      missions: [] as import("@/types/basecamp").BasecampMission[],
+      goals: [] as import("@/types/basecamp").BasecampGoal[],
+      notes: [] as import("@/types/basecamp").BasecampNote[],
+      seededFor: {} as Record<string, boolean>,
+    },
     decidedOutcomes: {} as Record<string, { option_id: string; summary: string }>,
   };
 }

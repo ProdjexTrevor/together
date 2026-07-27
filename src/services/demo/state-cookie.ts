@@ -67,6 +67,14 @@ function normalizeDemoState(state: DemoState): DemoState {
     webauthnCredentials: Array.isArray(state.webauthnCredentials)
       ? state.webauthnCredentials
       : [],
+    basecamp: state.basecamp ?? {
+      ynm: [],
+      coupons: [],
+      missions: [],
+      goals: [],
+      notes: [],
+      seededFor: {},
+    },
   };
 }
 

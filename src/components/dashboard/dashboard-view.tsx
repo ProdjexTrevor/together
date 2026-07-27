@@ -67,7 +67,14 @@ export function DashboardView({
         <div>
           <h1 className="font-display text-[40px] leading-[1.05] text-ink md:text-[60px]">
             {greetingForHour(hour)}, {names}
-            <span className="ml-2 text-clay">♡</span>
+            <Link
+              href="/basecamp"
+              className="ml-2 inline-block text-clay transition hover:scale-110"
+              aria-label="Open private Basecamp"
+              title="Private"
+            >
+              ♡
+            </Link>
           </h1>
           <p className="mt-2 max-w-xl text-[15px] text-muted md:text-base">
             You&apos;ve got great things ahead—tackle a few together.
