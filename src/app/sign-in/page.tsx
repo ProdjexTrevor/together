@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { signInAction } from "@/services/actions";
-import { DEMO_PASSWORD } from "@/services/demo/repository";
 import { redirect } from "next/navigation";
 import { getRepository } from "@/services";
 
@@ -30,8 +29,7 @@ export default async function SignInPage({
       <Card className="p-6">
         <h1 className="font-display text-3xl text-ink">Sign in</h1>
         <p className="mt-2 text-sm text-muted">
-          Enter your household email to continue. Demo password:{" "}
-          <code className="rounded bg-page px-1">{DEMO_PASSWORD}</code>
+          Enter your household email and password to continue.
         </p>
         {error ? (
           <p className="mt-3 rounded-[12px] bg-pale-clay px-3 py-2 text-sm text-clay">{error}</p>
@@ -58,7 +56,7 @@ export default async function SignInPage({
               name="email"
               type="email"
               required
-              defaultValue="trevor@together.app"
+              placeholder="you@example.com"
               autoComplete="email"
             />
           </div>
@@ -69,7 +67,7 @@ export default async function SignInPage({
               name="password"
               type="password"
               required
-              defaultValue={DEMO_PASSWORD}
+              placeholder="Your password"
               autoComplete="current-password"
             />
           </div>
@@ -77,12 +75,6 @@ export default async function SignInPage({
             Sign in
           </Button>
         </form>
-
-        <div className="mt-4 rounded-[14px] bg-page/80 p-3 text-sm text-muted">
-          <p className="font-medium text-ink">Demo accounts</p>
-          <p className="mt-1">trevor@together.app</p>
-          <p>chanda@together.app</p>
-        </div>
 
         <form
           action={async (formData) => {
@@ -98,13 +90,13 @@ export default async function SignInPage({
           }}
           className="mt-4 space-y-3 border-t border-border pt-4"
         >
-          <p className="text-sm text-muted">Or continue as Chanda instantly:</p>
+          <p className="text-sm text-muted">Or continue with a magic link:</p>
           <Input
             name="email"
             type="email"
             required
             placeholder="you@example.com"
-            defaultValue="chanda@together.app"
+            autoComplete="email"
           />
           <Button type="submit" variant="secondary" className="w-full">
             Continue with magic link
